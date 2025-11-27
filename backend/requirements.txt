@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+minio
+yt-dlp
+openai-whisper
+requests
+python-multipart
+python-dotenv
