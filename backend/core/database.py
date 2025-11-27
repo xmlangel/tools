@@ -22,6 +22,7 @@ class Job(Base):
     input_data = Column(Text)  # YouTube URL or Input Text/File Path
     output_files = Column(Text)  # JSON string or comma-separated list of MinIO paths
     model_name = Column(String, nullable=True)
+    youtube_url = Column(Text, nullable=True)  # Store original YouTube URL for both STT and Translation
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
     error_message = Column(Text, nullable=True)

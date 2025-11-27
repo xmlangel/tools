@@ -9,9 +9,11 @@ const TranslationForm = ({ onJobCreated }) => {
     const [model, setModel] = useState('');
     const [loading, setLoading] = useState(false);
     const [files, setFiles] = useState([]);
+    const [sttJobs, setSttJobs] = useState([]);  // Store STT jobs to get YouTube URLs
 
     useEffect(() => {
         fetchFiles();
+        fetchSTTJobs();
         loadSettings();
     }, []);
 
@@ -50,17 +52,41 @@ const TranslationForm = ({ onJobCreated }) => {
         }
     };
 
+    const fetchSTTJobs = async () => {
+        try {
+            const response = await axios.get('http://localhost:8000/api/jobs');
+            const sttJobsList = response.data.jobs.filter(j => j.type === 'stt');
+            setSttJobs(sttJobsList);
+        } catch (err) {
+            console.error('Failed to fetch STT jobs:', err);
+        }
+    };
+
+    const getYouTubeUrlForFile = (filename) => {
+        // Find STT job that generated this file
+        const sttJob = sttJobs.find(job => {
+            if (job.output && job.output.text === filename) {
+                return true;
+            }
+            return false;
+        });
+        return sttJob?.youtube_url || null;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
         try {
+            const youtubeUrl = getYouTubeUrlForFile(inputFile);
+
             const response = await axios.post('http://localhost:8000/api/translate', {
                 input_file: inputFile,
                 target_lang: targetLang,
                 openwebui_url: openWebUIUrl,
                 api_key: apiKey,
-                model: model
+                model: model,
+                youtube_url: youtubeUrl  // Send YouTube URL if found
             });
 
             onJobCreated(response.data);

@@ -12,7 +12,7 @@ class STTRequest(BaseModel):
 
 @router.post("/stt")
 async def start_stt_job(request: STTRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    job = Job(type="stt", input_data=request.url, model_name=request.model)
+    job = Job(type="stt", input_data=request.url, model_name=request.model, youtube_url=request.url)
     db.add(job)
     db.commit()
     db.refresh(job)

@@ -8,7 +8,7 @@ const JobStatus = ({ job, onCompleted }) => {
     const [textContent, setTextContent] = useState('');
 
     useEffect(() => {
-        if (status === 'completed' || status === 'failed') return;
+        if (!job?.id || status === 'completed' || status === 'failed') return;
 
         const interval = setInterval(async () => {
             try {
@@ -28,10 +28,10 @@ const JobStatus = ({ job, onCompleted }) => {
 
     // YouTube URL에서 제목 추출 (파일명에서)
     const getTitle = () => {
-        if (data.output_files) {
-            const files = Object.values(data.output_files);
+        if (data.output) {
+            const files = Object.values(data.output);
             if (files.length > 0) {
-                const filename = files[0].split('/').pop().split('?')[0];
+                const filename = files[0];
                 // ID와 확장자 제거
                 return filename.replace(/^\d+_/, '').replace(/\.(mp3|txt)$/, '').replace(/_/g, ' ');
             }
@@ -39,10 +39,8 @@ const JobStatus = ({ job, onCompleted }) => {
         return null;
     };
 
-    const handleViewText = async (url, key) => {
+    const handleViewText = async (filename, key) => {
         try {
-            // URL에서 파일명 추출
-            const filename = url.split('/').pop();
             const response = await axios.get(`http://localhost:8000/api/view/${filename}`);
             setTextContent(response.data.content);
             setViewingText(key);
@@ -62,7 +60,7 @@ const JobStatus = ({ job, onCompleted }) => {
             <div className={`job-item ${status}`}>
                 <div className="job-header">
                     <span className="job-id">#{data.id}</span>
-                    <span className="job-type">{data.type.toUpperCase()}</span>
+                    <span className="job-type">{data.type?.toUpperCase()}</span>
                     <span className={`status-badge ${status}`}>{status}</span>
                 </div>
                 <div className="job-details">
@@ -92,26 +90,29 @@ const JobStatus = ({ job, onCompleted }) => {
                     )}
 
                     {data.error_message && <p className="error">{data.error_message}</p>}
-                    {status === 'completed' && data.output_files && (
+                    {status === 'completed' && data.output && (
                         <div className="downloads">
-                            {Object.entries(data.output_files).map(([key, url]) => (
-                                <div key={key} className="download-item">
-                                    {(key === 'text' || key === 'translated_text') ? (
-                                        <>
-                                            <button onClick={() => handleViewText(url, key)} className="view-btn">
-                                                View {key}
-                                            </button>
-                                            <a href={url} target="_blank" rel="noopener noreferrer" className="download-btn">
+                            {Object.entries(data.output).map(([key, filename]) => {
+                                const downloadUrl = `http://localhost:8000/api/download/${filename}`;
+                                return (
+                                    <div key={key} className="download-item">
+                                        {(key === 'text' || key === 'translated_text') ? (
+                                            <>
+                                                <button onClick={() => handleViewText(filename, key)} className="view-btn">
+                                                    View {key}
+                                                </button>
+                                                <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="download-btn">
+                                                    Download {key}
+                                                </a>
+                                            </>
+                                        ) : (
+                                            <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="download-btn">
                                                 Download {key}
                                             </a>
-                                        </>
-                                    ) : (
-                                        <a href={url} target="_blank" rel="noopener noreferrer" className="download-btn">
-                                            Download {key}
-                                        </a>
-                                    )}
-                                </div>
-                            ))}
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

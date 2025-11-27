@@ -4,6 +4,9 @@ import time
 from sqlalchemy.orm import Session
 from core.database import Job, SessionLocal
 from core.storage import upload_stream
+from core.logger import setup_logger
+
+logger = setup_logger("translation_service")
 
 def split_text(text, chunk_size=2000):
     chunks = []
@@ -46,6 +49,7 @@ def translate_chunk(text, api_url, api_key, model):
     }
 
     try:
+        logger.info(f"Sending translation request to {target_url} (Model: {model})")
         response = requests.post(target_url, headers=headers, json=data, timeout=120)
         response.raise_for_status()
         result = response.json()
@@ -54,15 +58,18 @@ def translate_chunk(text, api_url, api_key, model):
         elif 'message' in result:
              return result['message']['content'].strip()
         else:
+            logger.warning(f"Unexpected response format: {result}")
             return text
     except Exception as e:
-        print(f"Translation error: {e}")
+        logger.error(f"Translation error: {e}")
         return f"[Translation Failed] {text}"
 
-def process_translation_job(job_id: int, text_content: str, api_url: str, api_key: str, model: str):
+def process_translation_job(job_id: int, text_content: str, api_url: str, api_key: str, model: str, original_filename: str):
+    logger.info(f"Starting Translation job {job_id} with model {model} for file {original_filename}")
     db: Session = SessionLocal()
     job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
+        logger.error(f"Job {job_id} not found")
         return
 
     try:
@@ -71,10 +78,18 @@ def process_translation_job(job_id: int, text_content: str, api_url: str, api_ke
         db.commit()
 
         chunks = split_text(text_content)
+        logger.info(f"Job {job_id}: Split text into {len(chunks)} chunks")
         translated_parts = []
         
         total_chunks = len(chunks)
         for i, chunk in enumerate(chunks):
+            # Check for cancellation
+            db.refresh(job)
+            if job.status == "cancelled":
+                logger.info(f"Job {job_id}: Cancelled by user")
+                return
+
+            logger.info(f"Job {job_id}: Translating chunk {i+1}/{total_chunks} ({len(chunk)} chars)...")
             translated = translate_chunk(chunk, api_url, api_key, model)
             translated_parts.append(translated)
             
@@ -88,17 +103,23 @@ def process_translation_job(job_id: int, text_content: str, api_url: str, api_ke
         final_translation = "\n\n".join(translated_parts)
         
         # Upload to MinIO
-        output_filename = f"translation_{job_id}.txt"
+        # Generate output filename: original_filename_translation.txt
+        name_without_ext = original_filename.rsplit('.', 1)[0]
+        output_filename = f"{name_without_ext}_translation.txt"
+        
+        logger.info(f"Job {job_id}: Uploading result to MinIO as {output_filename}")
         upload_stream(final_translation.encode('utf-8'), output_filename, "text/plain")
         
         job.status = "completed"
         job.progress = 100
         job.output_files = json.dumps({"translated_text": output_filename})
         db.commit()
+        logger.info(f"Job {job_id}: Completed successfully")
 
     except Exception as e:
         job.status = "failed"
         job.error_message = str(e)
         db.commit()
+        logger.error(f"Job {job_id} failed: {e}", exc_info=True)
     finally:
         db.close()

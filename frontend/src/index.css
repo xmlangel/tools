@@ -382,41 +382,110 @@ header h1 {
 }
 
 .help-section {
-  background: var(--card-bg);
-  padding: 1.5rem;
-  border-radius: 8px;
+  background: #fff;
+  color: #1a1a1a;
+  padding: 3rem 2.5rem;
+  border-radius: 12px;
   margin-bottom: 2rem;
-  border-left: 4px solid var(--primary-color);
+  max-height: 75vh;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .help-section h3 {
-  margin-top: 0;
-  color: var(--primary-color);
+  margin: 0 0 2rem 0;
+  color: #1a1a1a;
+  font-size: 1.75rem;
+  font-weight: 700;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 1rem;
 }
 
 .help-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2.5rem;
+}
+
+.help-item {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  border-left: none;
 }
 
 .help-item h4 {
-  margin: 0 0 0.5rem 0;
-  color: var(--text-color);
+  margin: 0 0 1.25rem 0;
+  color: #1a1a1a;
+  font-size: 1.35rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.help-item ul {
+.help-item>ul {
   margin: 0;
-  padding-left: 1.5rem;
+  padding-left: 0;
+  list-style: none;
 }
 
-.help-item li {
+.help-item>ul>li {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+  color: #4a4a4a;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.help-item>ul>li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #646cff;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.help-item ul ul {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.help-item ul ul li {
   margin-bottom: 0.5rem;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  color: #666;
+  padding-left: 1.2rem;
+  position: relative;
+}
+
+.help-item ul ul li::before {
+  content: "◦";
+  position: absolute;
+  left: 0;
+  color: #999;
 }
 
 .help-item strong {
-  color: var(--primary-color);
+  color: #646cff;
+  font-weight: 600;
+  background: rgba(100, 108, 255, 0.08);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+}
+
+.help-item p {
+  background: #f8f9fa;
+  color: #4a4a4a;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  border-left: 3px solid #646cff;
+  margin: 1.25rem 0 0 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 /* Main App Styles */
