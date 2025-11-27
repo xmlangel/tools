@@ -1,77 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import STTForm from './components/STTForm';
-import TranslationForm from './components/TranslationForm';
-import JobStatus from './components/JobStatus';
-import axios from 'axios';
+import React, { useState } from 'react';
+import YoutubeSTTApp from './features/youtube-stt/components/YoutubeSTTApp';
 import './App.css';
 
 function App() {
-  const [jobs, setJobs] = useState([]);
-  const [activeTab, setActiveTab] = useState('stt');
-  const [loading, setLoading] = useState(true);
+  const [currentTool, setCurrentTool] = useState(null);
 
-  // 페이지 로드 시 최근 작업 불러오기
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  const tools = [
+    {
+      id: 'youtube-stt',
+      title: 'YouTube STT & Translation',
+      description: 'YouTube 영상을 텍스트로 변환하고 번역합니다.',
+      icon: '🎥'
+    },
+    // 추후 다른 툴 추가 가능
+    // { id: 'image-gen', title: 'Image Generator', description: '...', icon: '🎨' }
+  ];
 
-  const fetchJobs = async () => {
-    try {
-      const response = await axios.get('http://localhost:8000/api/jobs');
-      setJobs(response.data.jobs || []);
-    } catch (err) {
-      console.error('Failed to fetch jobs:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addJob = (job) => {
-    setJobs(prev => [job, ...prev]);
-  };
+  if (currentTool === 'youtube-stt') {
+    return <YoutubeSTTApp onBack={() => setCurrentTool(null)} />;
+  }
 
   return (
-    <div className="container">
-      <header>
-        <h1>YouTube STT & Translation</h1>
+    <div className="app-container">
+      <header className="main-header">
+        <h1>My AI Tools</h1>
+        <p>Select a tool to start working</p>
       </header>
 
-      <div className="tabs">
-        <button
-          className={activeTab === 'stt' ? 'active' : ''}
-          onClick={() => setActiveTab('stt')}
-        >
-          YouTube STT
-        </button>
-        <button
-          className={activeTab === 'translate' ? 'active' : ''}
-          onClick={() => setActiveTab('translate')}
-        >
-          Translation
-        </button>
-      </div>
-
-      <div className="content">
-        <div className="form-section">
-          {activeTab === 'stt' ? (
-            <STTForm onJobCreated={addJob} />
-          ) : (
-            <TranslationForm onJobCreated={addJob} />
-          )}
-        </div>
-
-        <div className="jobs-section">
-          <h3>Recent Jobs</h3>
-          {loading ? (
-            <p>Loading...</p>
-          ) : jobs.length === 0 ? (
-            <p className="no-jobs">No jobs yet.</p>
-          ) : (
-            jobs.map(job => (
-              <JobStatus key={job.id} job={job} />
-            ))
-          )}
-        </div>
+      <div className="tool-grid">
+        {tools.map(tool => (
+          <div key={tool.id} className="tool-card" onClick={() => setCurrentTool(tool.id)}>
+            <div className="tool-icon">{tool.icon}</div>
+            <h3>{tool.title}</h3>
+            <p>{tool.description}</p>
+          </div>
+        ))}
       </div>
     </div>
   );

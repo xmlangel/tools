@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const STTForm = ({ onJobCreated }) => {
@@ -13,6 +13,11 @@ const STTForm = ({ onJobCreated }) => {
     setError('');
 
     try {
+      // 설정 저장
+      await axios.post('http://localhost:8000/api/settings', {
+        stt_model: model
+      });
+
       const response = await axios.post('http://localhost:8000/api/stt', {
         url,
         model
@@ -23,6 +28,19 @@ const STTForm = ({ onJobCreated }) => {
       setError(err.response?.data?.detail || 'Failed to start STT job');
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/settings');
+      if (response.data.stt_model) setModel(response.data.stt_model);
+    } catch (err) {
+      console.error('Failed to load settings:', err);
     }
   };
 

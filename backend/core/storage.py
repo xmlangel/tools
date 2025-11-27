@@ -73,3 +73,23 @@ def list_files():
     except S3Error as e:
         print(f"Error listing files: {e}")
         return []
+
+def get_file_stream(object_name):
+    """Get a file stream from MinIO."""
+    try:
+        response = client.get_object(MINIO_BUCKET, object_name)
+        return response
+    except S3Error as e:
+        print(f"Error getting file stream: {e}")
+        raise
+
+def get_file_content(object_name):
+    """Get file content as string."""
+    try:
+        response = client.get_object(MINIO_BUCKET, object_name)
+        content = response.read().decode('utf-8')
+        response.close()
+        return content
+    except S3Error as e:
+        print(f"Error getting file content: {e}")
+        raise
