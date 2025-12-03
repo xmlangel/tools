@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import YoutubeSTTApp from './features/youtube-stt/components/YoutubeSTTApp';
+import ReleaseNoteConverter from './features/release-note/components/ReleaseNoteConverter';
 import JsonViewer from './features/json-viewer/components/JsonViewer';
 import './App.css';
 
@@ -12,6 +13,13 @@ function HomePage() {
       title: 'YouTube STT & Translation',
       description: 'YouTube 영상을 텍스트로 변환하고 번역합니다.',
       icon: '🎥'
+    },
+    {
+      id: 'release-note',
+      path: '/release-note',
+      title: '릴리즈 노트 변환기',
+      description: '개발자 언어를 고객이 설레는 카피로 변환합니다.',
+      icon: '📝'
     },
     {
       id: 'json-viewer',
@@ -47,6 +55,7 @@ function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/youtube-stt" element={<YoutubeSTTApp />} />
+      <Route path="/release-note" element={<ReleaseNoteConverter />} />
       <Route path="/json-viewer" element={<JsonViewer />} />
     </Routes>
   );
