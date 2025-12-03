@@ -35,6 +35,9 @@ class Settings(Base):
     value = Column(Text)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
+# Import User model so it is registered with Base
+from models.user import User
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import init_db
-from routers import files, jobs, stt, translation, settings, release_note
+from routers import files, jobs, stt, translation, settings, release_note, auth, users
 
 app = FastAPI()
 
@@ -20,6 +20,8 @@ def on_startup():
     init_db()
 
 # Include Routers
+app.include_router(auth.router, prefix="/api", tags=["auth"])
+app.include_router(users.router, prefix="/api", tags=["users"])
 app.include_router(files.router, prefix="/api", tags=["files"])
 app.include_router(jobs.router, prefix="/api", tags=["jobs"])
 app.include_router(stt.router, prefix="/api", tags=["stt"])

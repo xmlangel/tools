@@ -3,9 +3,13 @@ import { Routes, Route, Link } from 'react-router-dom';
 import YoutubeSTTApp from './features/youtube-stt/components/YoutubeSTTApp';
 import ReleaseNoteConverter from './features/release-note/components/ReleaseNoteConverter';
 import JsonViewer from './features/json-viewer/components/JsonViewer';
+import LoginPage from './features/auth/LoginPage';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import RequireAuth from './components/RequireAuth';
 import './App.css';
 
 function HomePage() {
+  const { logout } = useAuth();
   const tools = [
     {
       id: 'youtube-stt',
@@ -33,7 +37,10 @@ function HomePage() {
   return (
     <div className="app-container">
       <header className="main-header">
-        <h1>My AI Tools</h1>
+        <div className="header-content">
+          <h1>My AI Tools</h1>
+          <button onClick={logout} className="logout-button">Logout</button>
+        </div>
         <p>Select a tool to start working</p>
       </header>
 
@@ -52,12 +59,31 @@ function HomePage() {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/youtube-stt" element={<YoutubeSTTApp />} />
-      <Route path="/release-note" element={<ReleaseNoteConverter />} />
-      <Route path="/json-viewer" element={<JsonViewer />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={
+          <RequireAuth>
+            <HomePage />
+          </RequireAuth>
+        } />
+        <Route path="/youtube-stt" element={
+          <RequireAuth>
+            <YoutubeSTTApp />
+          </RequireAuth>
+        } />
+        <Route path="/release-note" element={
+          <RequireAuth>
+            <ReleaseNoteConverter />
+          </RequireAuth>
+        } />
+        <Route path="/json-viewer" element={
+          <RequireAuth>
+            <JsonViewer />
+          </RequireAuth>
+        } />
+      </Routes>
+    </AuthProvider>
   );
 }
 

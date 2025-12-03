@@ -8,3 +8,5 @@ openai-whisper
 requests
 python-multipart
 python-dotenv
+passlib[bcrypt]
+python-jose[cryptography]
