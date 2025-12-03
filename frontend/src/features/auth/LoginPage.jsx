@@ -27,7 +27,8 @@ function LoginPage() {
     return (
         <div className="login-container">
             <div className="login-card">
-                <h2>Login</h2>
+                <h2>Welcome Back</h2>
+                <p className="login-subtitle">Please enter your details to sign in</p>
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label htmlFor="username">Username</label>
