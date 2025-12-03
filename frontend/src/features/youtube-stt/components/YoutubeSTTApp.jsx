@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import STTForm from './STTForm';
 import TranslationForm from './TranslationForm';
 import JobRow from './JobRow';
 import axios from 'axios';
 import '../../../App.css';
 
-function YoutubeSTTApp({ onBack }) {
+function YoutubeSTTApp() {
+    const navigate = useNavigate();
     const [jobs, setJobs] = useState([]);
     const [activeTab, setActiveTab] = useState('stt');
     const [jobTab, setJobTab] = useState('stt');
@@ -43,7 +45,7 @@ function YoutubeSTTApp({ onBack }) {
     return (
         <div className="container">
             <header>
-                <button className="back-btn" onClick={onBack}>← Home</button>
+                <button className="back-btn" onClick={() => navigate('/')}>← Home</button>
                 <h1>YouTube STT & Translation</h1>
                 <button className="help-btn" onClick={() => setShowHelp(!showHelp)}>
                     {showHelp ? '닫기' : '사용 방법'}
