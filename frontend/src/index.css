@@ -390,6 +390,8 @@ header h1 {
   max-height: 75vh;
   overflow-y: auto;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: left;
+  /* 텍스트 왼쪽 정렬 추가 */
 }
 
 .help-section h3 {

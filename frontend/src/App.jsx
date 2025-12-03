@@ -1,24 +1,26 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
 import YoutubeSTTApp from './features/youtube-stt/components/YoutubeSTTApp';
+import JsonViewer from './features/json-viewer/components/JsonViewer';
 import './App.css';
 
-function App() {
-  const [currentTool, setCurrentTool] = useState(null);
-
+function HomePage() {
   const tools = [
     {
       id: 'youtube-stt',
+      path: '/youtube-stt',
       title: 'YouTube STT & Translation',
       description: 'YouTube 영상을 텍스트로 변환하고 번역합니다.',
       icon: '🎥'
     },
-    // 추후 다른 툴 추가 가능
-    // { id: 'image-gen', title: 'Image Generator', description: '...', icon: '🎨' }
+    {
+      id: 'json-viewer',
+      path: '/json-viewer',
+      title: 'JSON Viewer',
+      description: 'JSON 데이터를 포맷팅하고 검증합니다.',
+      icon: '🔍'
+    }
   ];
-
-  if (currentTool === 'youtube-stt') {
-    return <YoutubeSTTApp onBack={() => setCurrentTool(null)} />;
-  }
 
   return (
     <div className="app-container">
@@ -29,14 +31,24 @@ function App() {
 
       <div className="tool-grid">
         {tools.map(tool => (
-          <div key={tool.id} className="tool-card" onClick={() => setCurrentTool(tool.id)}>
+          <Link key={tool.id} to={tool.path} className="tool-card">
             <div className="tool-icon">{tool.icon}</div>
             <h3>{tool.title}</h3>
             <p>{tool.description}</p>
-          </div>
+          </Link>
         ))}
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/youtube-stt" element={<YoutubeSTTApp />} />
+      <Route path="/json-viewer" element={<JsonViewer />} />
+    </Routes>
   );
 }
 
