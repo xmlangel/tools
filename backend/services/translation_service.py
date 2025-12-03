@@ -5,6 +5,7 @@ from core.database import Job, SessionLocal
 from core.storage import upload_stream
 from core.logger import setup_logger
 from services.llm_service import send_llm_request
+from services.translation_template_service import get_template, DEFAULT_TEMPLATE
 
 logger = setup_logger("translation_service")
 
@@ -28,8 +29,11 @@ def split_text(text, chunk_size=2000):
     return chunks
 
 def translate_chunk(text, api_url, api_key, model):
-    system_prompt = "You are a professional translator. Translate the following text into Korean naturally."
-    user_prompt = f"다음 텍스트를 한국어로 번역해줘. 문맥을 고려해서 자연스럽게 번역하고, 번역된 결과만 출력해. 설명이나 잡담은 하지 마.\n\n[텍스트 시작]\n{text}\n[텍스트 끝]"
+    template = get_template()
+    system_prompt = template.get("system_prompt", DEFAULT_TEMPLATE["system_prompt"])
+    user_prompt_template = template.get("user_prompt_template", DEFAULT_TEMPLATE["user_prompt_template"])
+    
+    user_prompt = user_prompt_template.replace("{text}", text)
     
     try:
         return send_llm_request(api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
