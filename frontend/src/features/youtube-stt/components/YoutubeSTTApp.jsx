@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import STTForm from './STTForm';
 import TranslationForm from './TranslationForm';
+import SimpleTranslationForm from './SimpleTranslationForm';
 import JobRow from './JobRow';
 import axios from 'axios';
 import '../../../App.css';
@@ -134,7 +135,13 @@ function YoutubeSTTApp() {
                     className={activeTab === 'translate' ? 'active' : ''}
                     onClick={() => setActiveTab('translate')}
                 >
-                    Translation
+                    Translation (File)
+                </button>
+                <button
+                    className={activeTab === 'simple-translate' ? 'active' : ''}
+                    onClick={() => setActiveTab('simple-translate')}
+                >
+                    Simple Translation
                 </button>
             </div>
 
@@ -142,8 +149,10 @@ function YoutubeSTTApp() {
                 <div className="form-section">
                     {activeTab === 'stt' ? (
                         <STTForm onJobCreated={addJob} />
-                    ) : (
+                    ) : activeTab === 'translate' ? (
                         <TranslationForm onJobCreated={addJob} />
+                    ) : (
+                        <SimpleTranslationForm />
                     )}
                 </div>
 

@@ -42,7 +42,8 @@ async def start_translation_job(request: TranslationRequest, background_tasks: B
         request.openwebui_url, 
         request.api_key, 
         request.model,
-        request.input_file
+        request.input_file,
+        request.target_lang
     )
 
     return {"job_id": job.id, "status": "pending"}
@@ -63,3 +64,36 @@ async def update_template(request: TemplateRequest):
     if not success:
         raise HTTPException(status_code=500, detail="Failed to save template")
     return {"status": "success"}
+
+class SimpleTranslationRequest(BaseModel):
+    text: str
+    target_lang: str
+    openwebui_url: str
+    api_key: str
+    model: str
+    system_prompt: str = None
+
+@router.post("/translate/simple")
+async def simple_translation(request: SimpleTranslationRequest):
+    from services.translation_service import translate_chunk, split_text
+    
+    # Split text if it's too long, though for "simple" we might just process it.
+    # But to be safe and consistent, let's split and join.
+    chunks = split_text(request.text)
+    translated_parts = []
+    
+    for chunk in chunks:
+        # We can't use background tasks here easily if we want to return the result synchronously.
+        # So we'll do it synchronously. This might timeout for very large texts.
+        translated = translate_chunk(
+            chunk, 
+            request.openwebui_url, 
+            request.api_key, 
+            request.model, 
+            request.target_lang,
+            request.system_prompt
+        )
+        translated_parts.append(translated)
+    
+    final_translation = "\n\n".join(translated_parts)
+    return {"translated_text": final_translation}

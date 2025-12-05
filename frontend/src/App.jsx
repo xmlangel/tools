@@ -8,8 +8,14 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import RequireAuth from './components/RequireAuth';
 import './App.css';
 
+import { LLMProvider } from './context/LLMContext';
+import LLMConfigModal from './components/LLMConfigModal';
+import { useState } from 'react';
+
 function HomePage() {
   const { logout } = useAuth();
+  const [isLLMModalOpen, setIsLLMModalOpen] = useState(false);
+
   const tools = [
     {
       id: 'youtube-stt',
@@ -36,7 +42,20 @@ function HomePage() {
 
   return (
     <div className="app-container">
-      <button onClick={logout} className="logout-button">Logout</button>
+      <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '1rem' }}>
+        <button onClick={() => setIsLLMModalOpen(true)} className="llm-settings-btn" style={{
+          padding: '0.5rem 1rem',
+          backgroundColor: '#28a745',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: 'pointer'
+        }}>
+          LLM Settings
+        </button>
+        <button onClick={logout} className="logout-button">Logout</button>
+      </div>
+
       <header className="main-header">
         <h1>My AI Tools</h1>
         <p>Select a tool to start working</p>
@@ -51,6 +70,8 @@ function HomePage() {
           </Link>
         ))}
       </div>
+
+      <LLMConfigModal isOpen={isLLMModalOpen} onClose={() => setIsLLMModalOpen(false)} />
     </div>
   );
 }
@@ -58,29 +79,31 @@ function HomePage() {
 function App() {
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={
-          <RequireAuth>
-            <HomePage />
-          </RequireAuth>
-        } />
-        <Route path="/youtube-stt" element={
-          <RequireAuth>
-            <YoutubeSTTApp />
-          </RequireAuth>
-        } />
-        <Route path="/release-note" element={
-          <RequireAuth>
-            <ReleaseNoteConverter />
-          </RequireAuth>
-        } />
-        <Route path="/json-viewer" element={
-          <RequireAuth>
-            <JsonViewer />
-          </RequireAuth>
-        } />
-      </Routes>
+      <LLMProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={
+            <RequireAuth>
+              <HomePage />
+            </RequireAuth>
+          } />
+          <Route path="/youtube-stt" element={
+            <RequireAuth>
+              <YoutubeSTTApp />
+            </RequireAuth>
+          } />
+          <Route path="/release-note" element={
+            <RequireAuth>
+              <ReleaseNoteConverter />
+            </RequireAuth>
+          } />
+          <Route path="/json-viewer" element={
+            <RequireAuth>
+              <JsonViewer />
+            </RequireAuth>
+          } />
+        </Routes>
+      </LLMProvider>
     </AuthProvider>
   );
 }

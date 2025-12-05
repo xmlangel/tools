@@ -4,53 +4,27 @@ import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import './ReleaseNote.css';
 import TemplateEditor from './TemplateEditor';
+import { useLLM } from '../../../../context/LLMContext';
 
 const ReleaseNoteConverter = () => {
     const navigate = useNavigate();
     const [inputText, setInputText] = useState('');
     const [result, setResult] = useState('');
     const [loading, setLoading] = useState(false);
-    const [settings, setSettings] = useState({
-        openwebui_url: '',
-        api_key: '',
-        model: ''
-    });
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
 
-    useEffect(() => {
-        loadSettings();
-    }, []);
-
-    // ... (loadSettings, handleSettingsChange, handleConvert, loadExample, copyToClipboard functions remain same)
-
-    const loadSettings = async () => {
-        try {
-            const response = await axios.get('http://localhost:8000/api/settings');
-            setSettings({
-                openwebui_url: response.data.openwebui_url || '',
-                api_key: response.data.api_key || '',
-                model: response.data.model || ''
-            });
-        } catch (err) {
-            console.error('Failed to load settings:', err);
-        }
-    };
-
-    const handleSettingsChange = (e) => {
-        setSettings({
-            ...settings,
-            [e.target.name]: e.target.value
-        });
-    };
+    const { configs, selectedConfigId, setSelectedConfigId, getSelectedConfig } = useLLM();
 
     const handleConvert = async () => {
         if (!inputText.trim()) {
             alert('변환할 텍스트를 입력해주세요.');
             return;
         }
-        if (!settings.openwebui_url || !settings.api_key || !settings.model) {
-            alert('설정(URL, API Key, Model)을 모두 입력해주세요.');
+
+        const selectedConfig = getSelectedConfig();
+        if (!selectedConfig) {
+            alert('Please select an LLM configuration first.');
             return;
         }
 
@@ -58,9 +32,9 @@ const ReleaseNoteConverter = () => {
         try {
             const response = await axios.post('http://localhost:8000/api/release-note/convert', {
                 input_text: inputText,
-                openwebui_url: settings.openwebui_url,
-                api_key: settings.api_key,
-                model: settings.model
+                openwebui_url: selectedConfig.openwebui_url,
+                api_key: selectedConfig.api_key,
+                model: selectedConfig.model
             });
             setResult(response.data.result);
         } catch (err) {
@@ -114,11 +88,10 @@ const ReleaseNoteConverter = () => {
                     </div>
                     <div className="rn-help-content">
                         <div className="rn-help-item">
-                            <h4>1️⃣ 설정 입력</h4>
+                            <h4>1️⃣ 설정 선택</h4>
                             <ul>
-                                <li><strong>OpenWebUI URL</strong>: LLM 서버 주소 (예: http://localhost:3000)</li>
-                                <li><strong>API Key</strong>: 인증 키</li>
-                                <li><strong>Model</strong>: 사용할 모델명 (예: gpt-4)</li>
+                                <li>우측 상단의 <strong>LLM Settings</strong>에서 LLM 설정을 추가하세요.</li>
+                                <li>아래 드롭다운에서 사용할 설정을 선택하세요.</li>
                             </ul>
                         </div>
                         <div className="rn-help-item">
@@ -142,38 +115,25 @@ const ReleaseNoteConverter = () => {
 
             <div className="rn-settings-panel">
                 <div className="rn-settings-grid">
-                    <div className="rn-input-group">
-                        <label className="rn-label">OpenWebUI URL</label>
-                        <input
-                            type="text"
+                    <div className="rn-input-group" style={{ gridColumn: '1 / -1' }}>
+                        <label className="rn-label">LLM Configuration</label>
+                        <select
                             className="rn-input"
-                            name="openwebui_url"
-                            value={settings.openwebui_url}
-                            onChange={handleSettingsChange}
-                            placeholder="http://localhost:3000"
-                        />
-                    </div>
-                    <div className="rn-input-group">
-                        <label className="rn-label">API Key</label>
-                        <input
-                            type="password"
-                            className="rn-input"
-                            name="api_key"
-                            value={settings.api_key}
-                            onChange={handleSettingsChange}
-                            placeholder="sk-..."
-                        />
-                    </div>
-                    <div className="rn-input-group">
-                        <label className="rn-label">Model</label>
-                        <input
-                            type="text"
-                            className="rn-input"
-                            name="model"
-                            value={settings.model}
-                            onChange={handleSettingsChange}
-                            placeholder="gpt-4"
-                        />
+                            value={selectedConfigId || ''}
+                            onChange={(e) => setSelectedConfigId(Number(e.target.value))}
+                        >
+                            <option value="" disabled>Select LLM Configuration...</option>
+                            {configs.map(config => (
+                                <option key={config.id} value={config.id}>
+                                    {config.name} ({config.model})
+                                </option>
+                            ))}
+                        </select>
+                        {configs.length === 0 && (
+                            <p style={{ fontSize: '0.8rem', color: 'red', marginTop: '0.5rem' }}>
+                                No LLM configurations found. Please add one in the settings.
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>

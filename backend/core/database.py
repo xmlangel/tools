@@ -35,6 +35,17 @@ class Settings(Base):
     value = Column(Text)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
+class LLMConfig(Base):
+    __tablename__ = "llm_configs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)  # Profile name (e.g., "My GPT-4")
+    openwebui_url = Column(String)
+    api_key = Column(String)
+    model = Column(String)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
 # Import User model so it is registered with Base
 from models.user import User
 
