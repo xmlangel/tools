@@ -4,7 +4,7 @@ import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import './ReleaseNote.css';
 import TemplateEditor from './TemplateEditor';
-import { useLLM } from '../../../../context/LLMContext';
+import { useLLM } from '../../../context/LLMContext';
 
 const ReleaseNoteConverter = () => {
     const navigate = useNavigate();

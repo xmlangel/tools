@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useLLM } from '../../../../context/LLMContext';
+import { useLLM } from '../../../context/LLMContext';
 
 const SimpleTranslationForm = () => {
     const [inputText, setInputText] = useState('');
