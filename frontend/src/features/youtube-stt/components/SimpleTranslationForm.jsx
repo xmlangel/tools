@@ -2,44 +2,40 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLLM } from '../../../context/LLMContext';
 
+const PRESETS = {
+    default: {
+        label: '기본 (Default)',
+        prompt: 'You are a professional translator. Translate the following text into {target_lang} naturally.'
+    },
+    native: {
+        label: '원어민 스타일 (Native)',
+        prompt: 'You are a helpful assistant. Rewrite the input text into natural, native-like {target_lang}. If the input is already in {target_lang}, refine it to sound more authentic and easy for locals to understand. Use idioms and casual phrasing where appropriate.'
+    },
+    business: {
+        label: '비즈니스 (Business)',
+        prompt: 'You are a professional assistant. Translate or refine the text into formal, professional {target_lang}. Use appropriate business terminology and polite tone.'
+    }
+};
+
 const SimpleTranslationForm = () => {
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [targetLang, setTargetLang] = useState('auto');
-    const [systemPrompt, setSystemPrompt] = useState('');
+    const [systemPrompt, setSystemPrompt] = useState(PRESETS.business.prompt);
     const [loading, setLoading] = useState(false);
+    const [isPromptExpanded, setIsPromptExpanded] = useState(false);
+    const [isTargetLangExpanded, setIsTargetLangExpanded] = useState(false);
+
+    const [toast, setToast] = useState({ show: false, message: '' });
 
     const { configs, selectedConfigId, setSelectedConfigId, getSelectedConfig } = useLLM();
 
-    const PRESETS = {
-        default: {
-            label: '기본 (Default)',
-            prompt: 'You are a professional translator. Translate the following text into {target_lang} naturally.'
-        },
-        native: {
-            label: '원어민 스타일 (Native)',
-            prompt: 'You are a helpful assistant. Rewrite the input text into natural, native-like {target_lang}. If the input is already in {target_lang}, refine it to sound more authentic and easy for locals to understand. Use idioms and casual phrasing where appropriate.'
-        },
-        business: {
-            label: '비즈니스 (Business)',
-            prompt: 'You are a professional assistant. Translate or refine the text into formal, professional {target_lang}. Use appropriate business terminology and polite tone.'
-        }
-    };
-
-    useEffect(() => {
-        loadDefaultTemplate();
-    }, []);
-
-    const loadDefaultTemplate = async () => {
-        try {
-            // Fetch default template to pre-fill system prompt if empty
-            const templateResponse = await axios.get('http://localhost:8000/api/template');
-            if (templateResponse.data.system_prompt) {
-                setSystemPrompt(templateResponse.data.system_prompt);
-            }
-        } catch (err) {
-            console.error('Failed to load default template:', err);
-        }
+    const handleCopy = () => {
+        if (!outputText) return;
+        navigator.clipboard.writeText(outputText).then(() => {
+            setToast({ show: true, message: '클립보드에 복사되었습니다.' });
+            setTimeout(() => setToast({ show: false, message: '' }), 3000);
+        });
     };
 
     const handlePresetChange = (e) => {
@@ -78,8 +74,30 @@ const SimpleTranslationForm = () => {
         }
     };
 
+    const getCurrentPresetLabel = () => {
+        const found = Object.values(PRESETS).find(p => p.prompt === systemPrompt);
+        return found ? found.label : '사용자 정의 (Custom)';
+    };
+
     return (
-        <div className="card">
+        <div className="card" style={{ position: 'relative' }}>
+            {toast.show && (
+                <div style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '4px',
+                    zIndex: 1000,
+                    fontSize: '0.9rem',
+                    animation: 'fadeIn 0.3s, fadeOut 0.3s 2.7s'
+                }}>
+                    {toast.message}
+                </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <h2 style={{ margin: 0 }}>간편 텍스트 번역</h2>
             </div>
@@ -111,30 +129,86 @@ const SimpleTranslationForm = () => {
             </div>
 
             <div className="form-group">
-                <label>System Prompt (시스템 프롬프트)</label>
-                <div style={{ marginBottom: '0.5rem' }}>
-                    <select
-                        onChange={handlePresetChange}
-                        style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid #555', width: '100%', backgroundColor: '#333', color: 'white' }}
-                        defaultValue=""
-                    >
-                        <option value="" disabled>프리셋 선택...</option>
-                        {Object.entries(PRESETS).map(([key, preset]) => (
-                            <option key={key} value={key}>{preset.label}</option>
-                        ))}
-                    </select>
+                <div
+                    onClick={() => setIsPromptExpanded(!isPromptExpanded)}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        marginBottom: isPromptExpanded ? '0.5rem' : '0'
+                    }}
+                >
+                    <span style={{ marginRight: '0.5rem', fontSize: '0.8rem' }}>
+                        {isPromptExpanded ? '▼' : '▶'}
+                    </span>
+                    <label style={{ cursor: 'pointer', margin: 0 }}>System Prompt (시스템 프롬프트)</label>
+                    <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#aaa' }}>
+                        {isPromptExpanded ? '' : `(현재: ${getCurrentPresetLabel()}) (클릭하여 펼치기)`}
+                    </span>
                 </div>
-                <textarea
-                    value={systemPrompt}
-                    onChange={(e) => setSystemPrompt(e.target.value)}
-                    placeholder="You are a professional translator..."
-                    rows={3}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}
-                />
-                <p style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '0.2rem' }}>
-                    번역 시 사용할 시스템 프롬프트를 직접 수정할 수 있습니다.
-                </p>
+
+                {isPromptExpanded && (
+                    <div style={{ marginTop: '0.5rem', animation: 'fadeIn 0.2s' }}>
+                        <div style={{ marginBottom: '0.5rem' }}>
+                            <select
+                                onChange={handlePresetChange}
+                                style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid #555', width: '100%', backgroundColor: '#333', color: 'white' }}
+                                defaultValue="business"
+                            >
+                                <option value="" disabled>프리셋 선택...</option>
+                                {Object.entries(PRESETS).map(([key, preset]) => (
+                                    <option key={key} value={key}>{preset.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <textarea
+                            value={systemPrompt}
+                            onChange={(e) => setSystemPrompt(e.target.value)}
+                            placeholder="You are a professional translator..."
+                            rows={3}
+                            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}
+                        />
+                        <p style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '0.2rem' }}>
+                            번역 시 사용할 시스템 프롬프트를 직접 수정할 수 있습니다.
+                        </p>
+                    </div>
+                )}
             </div>
+
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <div
+                    onClick={() => setIsTargetLangExpanded(!isTargetLangExpanded)}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                        marginBottom: isTargetLangExpanded ? '0.5rem' : '0'
+                    }}
+                >
+                    <span style={{ marginRight: '0.5rem', fontSize: '0.8rem' }}>
+                        {isTargetLangExpanded ? '▼' : '▶'}
+                    </span>
+                    <label style={{ cursor: 'pointer', margin: 0 }}>목표 언어</label>
+                    <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#aaa' }}>
+                        {isTargetLangExpanded ? '' : `(현재: ${targetLang === 'auto' ? '자동' : targetLang}) (클릭하여 펼치기)`}
+                    </span>
+                </div>
+
+                {isTargetLangExpanded && (
+                    <div style={{ marginTop: '0.5rem', animation: 'fadeIn 0.2s' }}>
+                        <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px' }}>
+                            <option value="auto">자동 (Auto: En↔Ko)</option>
+                            <option value="ko">한국어</option>
+                            <option value="en">영어</option>
+                            <option value="ja">일본어</option>
+                            <option value="zh">중국어</option>
+                        </select>
+                    </div>
+                )}
+            </div>
+
             <form onSubmit={handleTranslate}>
                 <div className="form-group">
                     <label>원본 텍스트</label>
@@ -148,23 +222,30 @@ const SimpleTranslationForm = () => {
                     />
                 </div>
 
-                <div className="form-group">
-                    <label>목표 언어</label>
-                    <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#333', color: 'white', border: '1px solid #555' }}>
-                        <option value="auto">자동 (Auto: En↔Ko)</option>
-                        <option value="ko">한국어</option>
-                        <option value="en">영어</option>
-                        <option value="ja">일본어</option>
-                        <option value="zh">중국어</option>
-                    </select>
-                </div>
-
                 <button type="submit" disabled={loading} style={{ width: '100%', marginBottom: '1.5rem' }}>
                     {loading ? '번역 중...' : '번역하기'}
                 </button>
 
                 <div className="form-group">
-                    <label>번역 결과</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <label style={{ margin: 0 }}>번역 결과</label>
+                        <button
+                            type="button"
+                            onClick={handleCopy}
+                            disabled={!outputText}
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid #555',
+                                color: outputText ? 'white' : '#777',
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '4px',
+                                cursor: outputText ? 'pointer' : 'not-allowed',
+                                fontSize: '0.8rem'
+                            }}
+                        >
+                            📋 복사
+                        </button>
+                    </div>
                     <textarea
                         value={outputText}
                         readOnly
