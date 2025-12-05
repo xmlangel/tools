@@ -36,11 +36,9 @@ function HomePage() {
 
   return (
     <div className="app-container">
+      <button onClick={logout} className="logout-button">Logout</button>
       <header className="main-header">
-        <div className="header-content">
-          <h1>My AI Tools</h1>
-          <button onClick={logout} className="logout-button">Logout</button>
-        </div>
+        <h1>My AI Tools</h1>
         <p>Select a tool to start working</p>
       </header>
 

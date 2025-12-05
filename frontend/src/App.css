@@ -57,14 +57,6 @@
   margin-bottom: 4rem;
 }
 
-.header-content {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 2rem;
-  position: relative;
-}
-
 .main-header h1 {
   font-size: 3rem;
   color: #2c3e50;
@@ -77,8 +69,9 @@
 }
 
 .logout-button {
-  position: absolute;
-  right: 0;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
   padding: 0.5rem 1rem;
   background-color: #dc3545;
   color: white;
@@ -86,6 +79,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
+  z-index: 1000;
 }
 
 .logout-button:hover {
@@ -102,22 +96,24 @@
 
 /* Tool Card */
 .tool-card {
-  background: white;
+  background: #3a3a3a;
   border-radius: 12px;
   padding: 2rem;
   text-decoration: none;
-  color: inherit;
+  color: rgba(255, 255, 255, 0.87);
   transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  border: 1px solid #555;
 }
 
 .tool-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
+  border-color: #646cff;
 }
 
 .tool-icon {
@@ -127,11 +123,11 @@
 
 .tool-card h3 {
   font-size: 1.5rem;
-  color: #2c3e50;
+  color: rgba(255, 255, 255, 0.87);
   margin-bottom: 1rem;
 }
 
 .tool-card p {
-  color: #666;
+  color: #aaa;
   line-height: 1.5;
 }

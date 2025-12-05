@@ -53,11 +53,12 @@
 .form-group input {
     width: 100%;
     padding: 0.875rem 1rem;
-    border: 2px solid #e2e8f0;
+    border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.2s;
-    background-color: #f8fafc;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #1a1a1a;
     box-sizing: border-box;
     /* Ensure padding doesn't affect width */
 }
@@ -65,7 +66,7 @@
 .form-group input:focus {
     outline: none;
     border-color: #667eea;
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.15);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
