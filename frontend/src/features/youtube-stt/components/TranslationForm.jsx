@@ -1,49 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TranslationTemplateEditor from './TranslationTemplateEditor';
+import { useLLM } from '../../../context/LLMContext';
 
 const TranslationForm = ({ onJobCreated }) => {
     const [inputFile, setInputFile] = useState('');
     const [targetLang, setTargetLang] = useState('ko');
-    const [openWebUIUrl, setOpenWebUIUrl] = useState('');
-    const [apiKey, setApiKey] = useState('');
-    const [model, setModel] = useState('');
     const [loading, setLoading] = useState(false);
     const [files, setFiles] = useState([]);
     const [sttJobs, setSttJobs] = useState([]);  // Store STT jobs to get YouTube URLs
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
 
+    const { configs, selectedConfigId, setSelectedConfigId, getSelectedConfig } = useLLM();
+
     useEffect(() => {
         fetchFiles();
         fetchSTTJobs();
-        loadSettings();
     }, []);
-
-    const loadSettings = async () => {
-        try {
-            const response = await axios.get('http://localhost:8000/api/settings');
-            if (response.data.openwebui_url) setOpenWebUIUrl(response.data.openwebui_url);
-            if (response.data.api_key) setApiKey(response.data.api_key);
-            if (response.data.model) setModel(response.data.model);
-        } catch (err) {
-            console.error('Failed to load settings:', err);
-        }
-    };
-
-    const saveSettings = async () => {
-        try {
-            await axios.post('http://localhost:8000/api/settings', {
-                openwebui_url: openWebUIUrl,
-                api_key: apiKey,
-                model: model
-            });
-            alert('설정이 저장되었습니다.');
-        } catch (err) {
-            console.error('Failed to save settings:', err);
-            alert('설정 저장에 실패했습니다.');
-        }
-    };
 
     const fetchFiles = async () => {
         try {
@@ -78,6 +52,13 @@ const TranslationForm = ({ onJobCreated }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const selectedConfig = getSelectedConfig();
+        if (!selectedConfig) {
+            alert('Please select an LLM configuration first.');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -86,9 +67,9 @@ const TranslationForm = ({ onJobCreated }) => {
             const response = await axios.post('http://localhost:8000/api/translate', {
                 input_file: inputFile,
                 target_lang: targetLang,
-                openwebui_url: openWebUIUrl,
-                api_key: apiKey,
-                model: model,
+                openwebui_url: selectedConfig.openwebui_url,
+                api_key: selectedConfig.api_key,
+                model: selectedConfig.model,
                 youtube_url: youtubeUrl  // Send YouTube URL if found
             });
 
@@ -145,11 +126,10 @@ const TranslationForm = ({ onJobCreated }) => {
                     </div>
                     <div style={{ display: 'grid', gap: '1.5rem' }}>
                         <div>
-                            <h4 style={{ margin: '0 0 0.5rem 0' }}>1️⃣ 설정 입력</h4>
+                            <h4 style={{ margin: '0 0 0.5rem 0' }}>1️⃣ 설정 선택</h4>
                             <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#495057' }}>
-                                <li><strong>OpenWebUI URL</strong>: LLM 서버 주소 (예: http://localhost:3000)</li>
-                                <li><strong>API Key</strong>: 인증 키</li>
-                                <li><strong>Model</strong>: 사용할 모델명 (예: gpt-4)</li>
+                                <li>우측 상단의 <strong>LLM Settings</strong>에서 LLM 설정을 추가하세요.</li>
+                                <li>아래 드롭다운에서 사용할 설정을 선택하세요.</li>
                             </ul>
                         </div>
                         <div>
@@ -173,6 +153,27 @@ const TranslationForm = ({ onJobCreated }) => {
             )}
 
             <form onSubmit={handleSubmit}>
+                <div className="form-group" style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                    <label>LLM Configuration</label>
+                    <select
+                        value={selectedConfigId || ''}
+                        onChange={(e) => setSelectedConfigId(Number(e.target.value))}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                    >
+                        <option value="" disabled>Select LLM Configuration...</option>
+                        {configs.map(config => (
+                            <option key={config.id} value={config.id}>
+                                {config.name} ({config.model})
+                            </option>
+                        ))}
+                    </select>
+                    {configs.length === 0 && (
+                        <p style={{ fontSize: '0.8rem', color: 'red', marginTop: '0.5rem' }}>
+                            No LLM configurations found. Please add one in the settings.
+                        </p>
+                    )}
+                </div>
+
                 <div className="form-group">
                     <label>Input File (from MinIO)</label>
                     <select value={inputFile} onChange={(e) => setInputFile(e.target.value)} required>
@@ -193,45 +194,9 @@ const TranslationForm = ({ onJobCreated }) => {
                     </select>
                 </div>
 
-                <div className="form-group">
-                    <label>OpenWebUI URL</label>
-                    <input
-                        type="text"
-                        value={openWebUIUrl}
-                        onChange={(e) => setOpenWebUIUrl(e.target.value)}
-                        placeholder="http://localhost:3000"
-                        required
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>API Key</label>
-                    <input
-                        type="password"
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        placeholder="sk-..."
-                        required
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Model</label>
-                    <input
-                        type="text"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                        placeholder="gpt-4"
-                        required
-                    />
-                </div>
-
                 <div className="button-group">
                     <button type="button" onClick={() => setIsTemplateModalOpen(true)} className="save-btn" style={{ marginRight: '10px' }}>
                         ⚙️ 템플릿 편집
-                    </button>
-                    <button type="button" onClick={saveSettings} className="save-btn">
-                        Save Settings
                     </button>
                     <button type="submit" disabled={loading}>
                         {loading ? 'Processing...' : 'Start Translation'}

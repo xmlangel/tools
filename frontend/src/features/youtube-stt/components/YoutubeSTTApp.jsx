@@ -46,11 +46,13 @@ function YoutubeSTTApp() {
     return (
         <div className="container">
             <header>
-                <button className="back-btn" onClick={() => navigate('/')}>← Home</button>
-                <h1>YouTube STT & Translation</h1>
-                <button className="help-btn" onClick={() => setShowHelp(!showHelp)}>
-                    {showHelp ? '닫기' : '사용 방법'}
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button className="back-btn" onClick={() => navigate('/')}>← Home</button>
+                    <h1>YouTube STT & Translation</h1>
+                    <button className="help-btn" onClick={() => setShowHelp(!showHelp)}>
+                        {showHelp ? '닫기' : '사용 방법'}
+                    </button>
+                </div>
             </header>
 
             {showHelp && (

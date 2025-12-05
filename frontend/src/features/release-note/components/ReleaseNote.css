@@ -31,59 +31,159 @@
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    /* Page scrolls */
-    overflow-x: hidden;
-}
-
-.rn-container>.rn-header {
-    flex-shrink: 0;
-    padding: 0;
-}
-
-.rn-container>.rn-help-section {
-    flex-shrink: 0;
-    margin: 0 1.5rem 1rem 1.5rem;
-}
-
-.rn-container>.rn-settings-panel {
-    flex-shrink: 0;
-    margin: 0 1.5rem 1rem 1.5rem;
-}
-
-.rn-container>.rn-main-content {
-    flex: 1;
-    overflow: visible;
-    /* Content doesn't scroll independently */
-    padding: 0 1.5rem 1.5rem 1.5rem;
-    min-height: 0;
+    overflow: hidden;
 }
 
 .rn-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 0;
-    padding: 1rem 0.5rem;
-    height: auto;
-    position: sticky;
-    /* Header sticks */
-    top: 0;
-    z-index: 100;
+    padding: 1rem 2rem;
     background-color: var(--rn-bg-color);
-    /* Opaque background */
 }
 
 .rn-header h1 {
-    display: block;
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--rn-text-primary);
     margin: 0;
 }
 
-.rn-header p {
-    display: none;
+.rn-tabs {
+    flex-shrink: 0;
+    padding: 0 2rem;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.rn-tab-btn {
+    background: transparent;
+    border: 1px solid var(--rn-accent-color);
+    color: var(--rn-accent-color);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.rn-tab-btn.active {
+    background: var(--rn-accent-color);
+    color: white;
+}
+
+.rn-content {
+    flex: 1;
+    overflow: hidden;
+    padding: 0 2rem 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.rn-card {
+    background: var(--rn-card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 24px;
+    border: var(--rn-glass-border);
+    box-shadow: var(--rn-shadow);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.rn-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.rn-toolbar-btn {
+    background: transparent;
+    border: 1px solid var(--rn-accent-color);
+    color: var(--rn-accent-color);
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rn-toolbar-btn:hover {
+    background: var(--rn-accent-color);
+    color: white;
+}
+
+.rn-toolbar-btn.primary {
+    background: var(--rn-accent-color);
+    color: white;
+}
+
+.rn-toolbar-btn.primary:hover {
+    background: var(--rn-accent-hover);
+}
+
+.rn-toolbar-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.rn-form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.rn-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--rn-border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--rn-text-primary);
+    resize: none;
+    transition: all 0.2s ease;
+    min-height: 0;
+    font-family: inherit;
+    overflow-y: auto;
+}
+
+.rn-textarea:focus {
+    outline: none;
+    border-color: var(--rn-accent-color);
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.rn-result-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    border: 1px solid var(--rn-border-color);
+}
+
+.rn-result-content {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    text-align: left;
 }
 
 .rn-back-btn {
@@ -106,269 +206,23 @@
     background: rgba(0, 0, 0, 0.05);
 }
 
-.rn-help-btn {
-    background: none;
-    border: 1px solid var(--rn-border-color);
-    border-radius: 8px;
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    color: var(--rn-text-secondary);
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.rn-help-btn:hover {
-    background: white;
-    color: var(--rn-accent-color);
-    border-color: var(--rn-accent-color);
-}
-
-.rn-help-section {
-    background: var(--rn-card-bg);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    border: var(--rn-glass-border);
-    box-shadow: var(--rn-shadow);
-    text-align: left;
-    box-sizing: border-box;
-    overflow: visible;
-}
-
-.rn-help-section h3 {
-    color: var(--rn-text-primary);
-}
-
-.rn-help-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-}
-
-.rn-help-item h4 {
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-    color: var(--rn-accent-color);
-}
-
-.rn-help-item ul {
-    margin: 0;
-    padding-left: 1.2rem;
-    color: var(--rn-text-primary);
-    font-size: 0.95rem;
-    line-height: 1.5;
-}
-
-.rn-main-content {
-    display: flex;
-    gap: 2rem;
-    width: 100%;
-    min-height: 0;
-    align-items: stretch;
-    box-sizing: border-box;
-    overflow-x: hidden;
-}
-
-.rn-card {
-    background: var(--rn-card-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 24px;
-    border: var(--rn-glass-border);
-    box-shadow: var(--rn-shadow);
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 600px;
-    /* Ensure minimum height */
-    min-width: 0;
-    box-sizing: border-box;
-    transition: transform 0.2s ease;
-    overflow: hidden;
-}
-
-.rn-card:hover {
-    transform: translateY(-2px);
-}
-
-.rn-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-    /* 줄바꿈 허용 */
-    gap: 1rem;
-    /* 간격 추가 */
-    flex-shrink: 0;
-    /* 헤더 크기 유지 */
-}
-
-.rn-card-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--rn-text-primary);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.rn-textarea {
-    width: 100%;
-    box-sizing: border-box;
-    /* 패딩 포함하여 너비 계산 */
-    flex: 1;
-    /* 남은 공간 채우기 */
-    background: rgba(255, 255, 255, 0.5);
-    border: 1px solid var(--rn-border-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    font-size: 1rem;
-    line-height: 1.6;
-    color: var(--rn-text-primary);
-    resize: none;
-    transition: all 0.2s ease;
-    min-height: 0;
-    /* Flex item 스크롤 버그 방지 */
-    font-family: inherit;
-    overflow-y: auto;
-    /* 스크롤 추가 */
-}
-
-.rn-textarea:focus {
-    outline: none;
-    border-color: var(--rn-accent-color);
-    background: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 0 0 4px rgba(224, 122, 95, 0.1);
-}
-
-.rn-result-area {
-    flex: 1;
-    /* 남은 공간 채우기 */
-    overflow-y: auto;
-    padding-right: 0.5rem;
-    min-height: 0;
-    /* Flex item 스크롤 버그 방지 */
-}
-
-.rn-result-content {
-    white-space: pre-wrap;
-    line-height: 1.6;
-    text-align: left;
-    /* 텍스트 왼쪽 정렬 추가 */
-}
-
-.rn-column {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-width: 0;
-    height: 100%;
-}
-
-.rn-controls {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-end;
-    height: 50px;
-    /* 버튼 영역 높이 확보 */
-    align-items: center;
-}
-
-.rn-btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    white-space: nowrap;
-}
-
-.rn-btn-primary {
-    background-color: var(--rn-accent-color);
-    color: white;
-    box-shadow: 0 4px 12px rgba(224, 122, 95, 0.3);
-}
-
-.rn-btn-primary:hover {
-    background-color: var(--rn-accent-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(224, 122, 95, 0.4);
-}
-
-.rn-btn-secondary {
-    background-color: white;
-    color: var(--rn-text-primary);
-    border: 1px solid var(--rn-border-color);
-}
-
-.rn-btn-secondary:hover {
-    background-color: #FAFAFA;
-    border-color: var(--rn-text-secondary);
-}
-
-.rn-btn-text {
-    background: none;
-    color: var(--rn-text-secondary);
-    padding: 0.5rem 1rem;
-}
-
-.rn-btn-text:hover {
-    color: var(--rn-accent-color);
-    background: rgba(224, 122, 95, 0.05);
-}
-
-/* Settings Panel */
-.rn-settings-panel {
-    background: rgba(255, 255, 255, 0.4);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    border: 1px solid var(--rn-border-color);
-}
-
-.rn-settings-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.rn-input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.rn-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--rn-text-secondary);
-}
-
-.rn-input {
-    padding: 0.75rem;
+/* Settings Panel in Toolbar */
+.rn-settings-select {
+    padding: 0.5rem;
     border-radius: 8px;
     border: 1px solid var(--rn-border-color);
     background: rgba(255, 255, 255, 0.8);
     color: var(--rn-text-primary);
     font-size: 0.9rem;
+    min-width: 200px;
 }
 
-.rn-input:focus {
+.rn-settings-select:focus {
     outline: none;
     border-color: var(--rn-accent-color);
 }
 
-/* Modal */
+/* Help Modal */
 .rn-modal-overlay {
     position: fixed;
     top: 0;
@@ -392,31 +246,4 @@
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
-.rn-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.rn-modal-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--rn-text-primary);
-}
-
-/* .rn-back-btn removed (moved to top) */
-
-@media (max-width: 1024px) {
-    .rn-main-content {
-        flex-direction: column;
-    }
-
-    .rn-card {
-        height: 500px;
-        min-height: 500px;
-        max-height: 500px;
-    }
 }

@@ -74,26 +74,28 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
+            backgroundColor: 'rgba(0,0,0,0.7)',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 1000
         }}>
             <div style={{
-                backgroundColor: 'white',
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-color)',
                 padding: '2rem',
                 borderRadius: '8px',
                 width: '600px',
                 maxHeight: '80vh',
-                overflowY: 'auto'
+                overflowY: 'auto',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
             }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #555', paddingBottom: '1rem' }}>
                     <h2 style={{ margin: 0 }}>LLM Settings</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-color)' }}>&times;</button>
                 </div>
 
-                {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+                {error && <div style={{ color: '#f44336', marginBottom: '1rem', padding: '0.5rem', backgroundColor: 'rgba(244, 67, 54, 0.1)', borderRadius: '4px' }}>{error}</div>}
 
                 <div style={{ marginBottom: '2rem' }}>
                     <h3>{editingId ? 'Edit Configuration' : 'Add New Configuration'}</h3>
@@ -106,7 +108,7 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 placeholder="e.g., My GPT-4"
                                 required
-                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
                             />
                         </div>
                         <div className="form-group">
@@ -117,7 +119,7 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                 onChange={(e) => setFormData({ ...formData, openwebui_url: e.target.value })}
                                 placeholder="http://localhost:3000"
                                 required
-                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
                             />
                         </div>
                         <div className="form-group">
@@ -128,7 +130,7 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                 onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
                                 placeholder="sk-..."
                                 required
-                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
                             />
                         </div>
                         <div className="form-group">
@@ -139,11 +141,11 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                                 placeholder="gpt-4"
                                 required
-                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem' }}
+                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
                             />
                         </div>
                         <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button type="submit" className="save-btn" style={{ padding: '0.5rem 1rem', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                            <button type="submit" className="save-btn" style={{ padding: '0.5rem 1rem', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                                 {editingId ? 'Update' : 'Add'}
                             </button>
                             {editingId && (
@@ -158,28 +160,29 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                 <div>
                     <h3>Saved Configurations</h3>
                     {configs.length === 0 ? (
-                        <p>No configurations saved yet.</p>
+                        <p style={{ color: '#999' }}>No configurations saved yet.</p>
                     ) : (
                         <ul style={{ listStyle: 'none', padding: 0 }}>
                             {configs.map(config => (
                                 <li key={config.id} style={{
-                                    border: '1px solid #ddd',
+                                    border: '1px solid #555',
                                     borderRadius: '4px',
                                     padding: '1rem',
                                     marginBottom: '0.5rem',
                                     display: 'flex',
                                     justifyContent: 'space-between',
-                                    alignItems: 'center'
+                                    alignItems: 'center',
+                                    backgroundColor: '#2a2a2a'
                                 }}>
                                     <div>
-                                        <strong>{config.name}</strong>
-                                        <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                                        <strong style={{ color: 'var(--primary-color)' }}>{config.name}</strong>
+                                        <div style={{ fontSize: '0.85rem', color: '#aaa' }}>
                                             {config.model} @ {config.openwebui_url}
                                         </div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button onClick={() => handleEdit(config)} style={{ padding: '0.3rem 0.6rem', background: '#ffc107', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Edit</button>
-                                        <button onClick={() => handleDelete(config.id)} style={{ padding: '0.3rem 0.6rem', background: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
+                                        <button onClick={() => handleEdit(config)} style={{ padding: '0.3rem 0.6rem', background: '#ffc107', color: 'black', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Edit</button>
+                                        <button onClick={() => handleDelete(config.id)} style={{ padding: '0.3rem 0.6rem', background: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
                                     </div>
                                 </li>
                             ))}
