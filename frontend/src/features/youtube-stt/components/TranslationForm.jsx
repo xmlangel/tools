@@ -104,12 +104,13 @@ const TranslationForm = ({ onJobCreated }) => {
                 <div style={{
                     marginBottom: '2rem',
                     padding: '1.5rem',
-                    background: '#f8f9fa',
+                    background: '#3a3a3a',
                     borderRadius: '8px',
-                    border: '1px solid #e9ecef'
+                    border: '1px solid #555',
+                    color: 'rgba(255, 255, 255, 0.87)'
                 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h3 style={{ margin: 0 }}>📖 사용 방법</h3>
+                        <h3 style={{ margin: 0, color: 'white' }}>📖 사용 방법</h3>
                         <button
                             onClick={() => setShowHelp(false)}
                             style={{
@@ -117,32 +118,32 @@ const TranslationForm = ({ onJobCreated }) => {
                                 border: 'none',
                                 fontSize: '1.2rem',
                                 cursor: 'pointer',
-                                color: '#6c757d',
+                                color: 'rgba(255, 255, 255, 0.6)',
                                 padding: '0.5rem'
                             }}
                         >
                             ✕
                         </button>
                     </div>
-                    <div style={{ display: 'grid', gap: '1.5rem' }}>
+                    <div style={{ display: 'grid', gap: '1.5rem', textAlign: 'left' }}>
                         <div>
-                            <h4 style={{ margin: '0 0 0.5rem 0' }}>1️⃣ 설정 선택</h4>
-                            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#495057' }}>
+                            <h4 style={{ margin: '0 0 0.5rem 0', color: '#646cff' }}>1️⃣ 설정 선택</h4>
+                            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#ccc' }}>
                                 <li>우측 상단의 <strong>LLM Settings</strong>에서 LLM 설정을 추가하세요.</li>
                                 <li>아래 드롭다운에서 사용할 설정을 선택하세요.</li>
                             </ul>
                         </div>
                         <div>
-                            <h4 style={{ margin: '0 0 0.5rem 0' }}>2️⃣ 파일 선택 및 번역</h4>
-                            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#495057' }}>
+                            <h4 style={{ margin: '0 0 0.5rem 0', color: '#646cff' }}>2️⃣ 파일 선택 및 번역</h4>
+                            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#ccc' }}>
                                 <li><strong>Input File</strong>: MinIO에 저장된 텍스트 파일을 선택합니다.</li>
                                 <li><strong>Target Language</strong>: 번역할 언어를 선택합니다.</li>
                                 <li><strong>Start Translation</strong>: 번역 작업을 시작합니다.</li>
                             </ul>
                         </div>
                         <div>
-                            <h4 style={{ margin: '0 0 0.5rem 0' }}>3️⃣ 템플릿 설정 (고급)</h4>
-                            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#495057' }}>
+                            <h4 style={{ margin: '0 0 0.5rem 0', color: '#646cff' }}>3️⃣ 템플릿 설정 (고급)</h4>
+                            <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#ccc' }}>
                                 <li><strong>⚙️ 템플릿 편집</strong> 버튼을 눌러 번역 프롬프트를 수정할 수 있습니다.</li>
                                 <li><strong>System Prompt</strong>: AI 번역가의 페르소나를 설정합니다.</li>
                                 <li><strong>User Prompt</strong>: 구체적인 번역 지시사항을 설정합니다. (<code>{'{text}'}</code> 필수)</li>
@@ -153,12 +154,12 @@ const TranslationForm = ({ onJobCreated }) => {
             )}
 
             <form onSubmit={handleSubmit}>
-                <div className="form-group" style={{ marginBottom: '1.5rem', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                <div className="form-group" style={{ marginBottom: '1.5rem', padding: '1rem', background: '#2a2a2a', borderRadius: '8px', border: '1px solid #555' }}>
                     <label>LLM Configuration</label>
                     <select
                         value={selectedConfigId || ''}
                         onChange={(e) => setSelectedConfigId(Number(e.target.value))}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ddd' }}
+                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}
                     >
                         <option value="" disabled>Select LLM Configuration...</option>
                         {configs.map(config => (
@@ -168,7 +169,7 @@ const TranslationForm = ({ onJobCreated }) => {
                         ))}
                     </select>
                     {configs.length === 0 && (
-                        <p style={{ fontSize: '0.8rem', color: 'red', marginTop: '0.5rem' }}>
+                        <p style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '0.5rem' }}>
                             No LLM configurations found. Please add one in the settings.
                         </p>
                     )}
