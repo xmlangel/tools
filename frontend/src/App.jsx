@@ -3,6 +3,7 @@ import { Routes, Route, Link, Outlet } from 'react-router-dom';
 import YoutubeSTTApp from './features/youtube-stt/components/YoutubeSTTApp';
 import ReleaseNoteConverter from './features/release-note/components/ReleaseNoteConverter';
 import JsonViewer from './features/json-viewer/components/JsonViewer';
+import TextCounter from './features/text-counter/components/TextCounter';
 import LoginPage from './features/auth/LoginPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import RequireAuth from './components/RequireAuth';
@@ -16,44 +17,30 @@ const Layout = () => {
   const [isLLMModalOpen, setIsLLMModalOpen] = useState(false);
 
   return (
-    <>
-      <div style={{ position: 'fixed', top: '1rem', right: '1rem', display: 'flex', gap: '1rem', zIndex: 1000 }}>
-        <button
-          onClick={() => setIsLLMModalOpen(true)}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: 'bold'
-          }}
-        >
-          LLM Settings
-        </button>
-        <button
-          onClick={logout}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#dc3545',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontSize: '0.9rem',
-            fontWeight: 'bold'
-          }}
-        >
-          Logout
-        </button>
-      </div>
+    <div className="layout-container">
+      <header className="top-nav">
+        <div className="nav-content">
+          <div className="nav-buttons">
+            <button
+              onClick={() => setIsLLMModalOpen(true)}
+              className="nav-btn settings-btn"
+            >
+              LLM Settings
+            </button>
+            <button
+              onClick={logout}
+              className="nav-btn logout-btn"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
       <LLMConfigModal isOpen={isLLMModalOpen} onClose={() => setIsLLMModalOpen(false)} />
       <div className="app-content">
         <Outlet />
       </div>
-    </>
+    </div>
   );
 };
 
@@ -79,6 +66,13 @@ function HomePage() {
       title: 'JSON Viewer',
       description: 'JSON 데이터를 포맷팅하고 검증합니다.',
       icon: '🔍'
+    },
+    {
+      id: 'text-counter',
+      path: '/text-counter',
+      title: 'Text Counter',
+      description: '텍스트의 글자 수(공백 포함/제외)를 계산합니다.',
+      icon: '🔢'
     }
   ];
 
@@ -113,6 +107,7 @@ function App() {
             <Route path="/youtube-stt" element={<YoutubeSTTApp />} />
             <Route path="/release-note" element={<ReleaseNoteConverter />} />
             <Route path="/json-viewer" element={<JsonViewer />} />
+            <Route path="/text-counter" element={<TextCounter />} />
           </Route>
         </Routes>
       </LLMProvider>

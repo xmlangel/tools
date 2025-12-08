@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../../../config';
 
 const JobStatus = ({ job, onCompleted }) => {
     const [status, setStatus] = useState(job.status);
@@ -12,7 +13,7 @@ const JobStatus = ({ job, onCompleted }) => {
 
         const interval = setInterval(async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/api/jobs/${job.id}`);
+                const response = await axios.get(`${API_URL}/api/jobs/${job.id}`);
                 setStatus(response.data.status);
                 setData(response.data);
                 if (response.data.status === 'completed') {
@@ -41,7 +42,7 @@ const JobStatus = ({ job, onCompleted }) => {
 
     const handleViewText = async (filename, key) => {
         try {
-            const response = await axios.get(`http://localhost:8000/api/view/${filename}`);
+            const response = await axios.get(`${API_URL}/api/view/${filename}`);
             setTextContent(response.data.content);
             setViewingText(key);
         } catch (err) {
@@ -93,7 +94,7 @@ const JobStatus = ({ job, onCompleted }) => {
                     {status === 'completed' && data.output && (
                         <div className="downloads">
                             {Object.entries(data.output).map(([key, filename]) => {
-                                const downloadUrl = `http://localhost:8000/api/download/${filename}`;
+                                const downloadUrl = `${API_URL}/api/download/${filename}`;
                                 return (
                                     <div key={key} className="download-item">
                                         {(key === 'text' || key === 'translated_text') ? (

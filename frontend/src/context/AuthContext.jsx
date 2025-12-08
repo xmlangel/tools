@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 const AuthContext = createContext(null);
 
@@ -30,7 +31,7 @@ export const AuthProvider = ({ children }) => {
             formData.append('username', username);
             formData.append('password', password);
 
-            const response = await axios.post('http://localhost:8000/api/auth/login', formData, {
+            const response = await axios.post(`${API_URL}/api/auth/login`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

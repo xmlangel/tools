@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_URL } from '../../../config';
 
 const JobRow = ({ job, onCompleted }) => {
     const [status, setStatus] = useState(job.status);
@@ -12,7 +13,7 @@ const JobRow = ({ job, onCompleted }) => {
 
         const interval = setInterval(async () => {
             try {
-                const response = await axios.get(`http://localhost:8000/api/jobs/${job.id}`);
+                const response = await axios.get(`${API_URL}/api/jobs/${job.id}`);
                 setStatus(response.data.status);
                 setData(prevData => ({
                     ...prevData,  // Keep all previous data
@@ -46,7 +47,7 @@ const JobRow = ({ job, onCompleted }) => {
 
     const handleViewText = async (filename, key) => {
         try {
-            const response = await axios.get(`http://localhost:8000/api/view/${filename}`);
+            const response = await axios.get(`${API_URL}/api/view/${filename}`);
             setTextContent(response.data.content);
             setViewingText(key);
         } catch (err) {
@@ -63,7 +64,7 @@ const JobRow = ({ job, onCompleted }) => {
     const handleStop = async () => {
         if (!window.confirm('정말로 이 작업을 중지하시겠습니까?')) return;
         try {
-            await axios.post(`http://localhost:8000/api/jobs/${job.id}/cancel`);
+            await axios.post(`${API_URL}/api/jobs/${job.id}/cancel`);
             setStatus('cancelled');
             alert('작업이 중지되었습니다.');
         } catch (err) {
@@ -75,7 +76,7 @@ const JobRow = ({ job, onCompleted }) => {
     const handleDelete = async () => {
         if (!window.confirm('정말로 이 작업을 삭제하시겠습니까?')) return;
         try {
-            await axios.delete(`http://localhost:8000/api/jobs/${job.id}`);
+            await axios.delete(`${API_URL}/api/jobs/${job.id}`);
             onCompleted && onCompleted({ ...job, deleted: true }); // Notify parent to remove from list
         } catch (err) {
             console.error('Failed to delete job:', err);
@@ -126,7 +127,7 @@ const JobRow = ({ job, onCompleted }) => {
                         {status === 'completed' && data.output && (
                             <>
                                 {Object.entries(data.output).map(([key, filename]) => {
-                                    const downloadUrl = `http://localhost:8000/api/download/${filename}`;
+                                    const downloadUrl = `${API_URL}/api/download/${filename}`;
                                     return (
                                         <div key={key} className="action-group">
                                             {(key === 'text' || key === 'translated_text') ? (

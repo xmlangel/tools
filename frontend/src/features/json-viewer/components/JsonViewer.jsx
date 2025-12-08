@@ -51,6 +51,7 @@ const JsonViewer = () => {
 
         try {
             await navigator.clipboard.writeText(textToCopy);
+            alert('Copied to clipboard!');
         } catch (err) {
             console.error('Failed to copy:', err);
         }
@@ -73,68 +74,66 @@ const JsonViewer = () => {
     };
 
     return (
-        <div className="json-viewer-container">
-            <header>
-                <button className="back-btn" onClick={() => navigate('/')}>← Home</button>
-                <h1>JSON Viewer</h1>
-                <div></div>
+        <div className="jv-container">
+            <header className="jv-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button className="jv-back-btn" onClick={() => navigate('/')}>← Home</button>
+                    <h1>JSON Viewer</h1>
+                </div>
             </header>
 
-            <div className="tabs">
+            <div className="jv-tabs">
                 <button
-                    className={activeTab === 'editor' ? 'active' : ''}
+                    className={`jv-tab-btn ${activeTab === 'editor' ? 'active' : ''}`}
                     onClick={() => setActiveTab('editor')}
                 >
                     Editor
                 </button>
                 <button
-                    className={activeTab === 'viewer' ? 'active' : ''}
+                    className={`jv-tab-btn ${activeTab === 'viewer' ? 'active' : ''}`}
                     onClick={() => setActiveTab('viewer')}
                 >
                     Viewer
                 </button>
             </div>
 
-            <div className="content">
-                <div className="form-section">
+            <div className="jv-content">
+                <div className="jv-card">
                     {activeTab === 'editor' ? (
-                        <div className="card">
-                            <div className="toolbar">
-                                <button className="toolbar-btn primary" onClick={handleFormat}>Format</button>
-                                <button className="toolbar-btn" onClick={handleRemoveWhitespace}>Remove Whitespace</button>
-                                <button className="toolbar-btn" onClick={handlePaste}>Paste</button>
-                                <button className="toolbar-btn" onClick={handleClear}>Clear</button>
-                                <button className="toolbar-btn" onClick={handleCopy} disabled={!input}>Copy</button>
+                        <>
+                            <div className="jv-toolbar">
+                                <button className="jv-toolbar-btn primary" onClick={handleFormat}>Format</button>
+                                <button className="jv-toolbar-btn" onClick={handleRemoveWhitespace}>Remove Whitespace</button>
+                                <button className="jv-toolbar-btn" onClick={handlePaste}>Paste</button>
+                                <button className="jv-toolbar-btn" onClick={handleClear}>Clear</button>
+                                <button className="jv-toolbar-btn" onClick={handleCopy} disabled={!input}>Copy</button>
                             </div>
 
-                            {error && <div className="error">{error}</div>}
+                            {error && <div className="jv-error-msg">{error}</div>}
 
-                            <div className="form-group">
-                                <label htmlFor="json-input">JSON Input</label>
-                                <textarea
-                                    id="json-input"
-                                    className={`json - input ${error ? 'error-border' : ''} `}
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    placeholder="Paste or type your JSON here..."
-                                    spellCheck="false"
-                                    rows={20}
-                                />
-                            </div>
-                        </div>
+                            <textarea
+                                className={`jv-textarea ${error ? 'error-border' : ''}`}
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="Paste or type your JSON here..."
+                                spellCheck="false"
+                            />
+                        </>
                     ) : (
-                        <div className="card">
-                            <div className="toolbar">
-                                <button className="toolbar-btn" onClick={handleCopy} disabled={!output}>Copy Output</button>
+                        <>
+                            <div className="jv-toolbar">
+                                <button className="jv-toolbar-btn" onClick={handleCopy} disabled={!output}>Copy Output</button>
+                                <button className="jv-toolbar-btn" onClick={() => setActiveTab('editor')}>
+                                    ✏️ Edit
+                                </button>
                             </div>
 
-                            <div className="form-group">
-                                <label htmlFor="json-output">Formatted JSON</label>
-                                <pre className="json-output" id="json-output">
+                            <div className="jv-result-area">
+                                <pre className="jv-result-content">
                                     {output || 'No output yet. Use the Editor tab to format JSON.'}
                                 </pre>
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
             </div>

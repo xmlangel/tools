@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import './ReleaseNote.css';
 import TemplateEditor from './TemplateEditor';
 import { useLLM } from '../../../context/LLMContext';
+import { API_URL } from '../../../config';
 
 const ReleaseNoteConverter = () => {
     const navigate = useNavigate();
@@ -31,7 +32,7 @@ const ReleaseNoteConverter = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:8000/api/release-note/convert', {
+            const response = await axios.post(`${API_URL}/api/release-note/convert`, {
                 input_text: inputText,
                 openwebui_url: selectedConfig.openwebui_url,
                 api_key: selectedConfig.api_key,

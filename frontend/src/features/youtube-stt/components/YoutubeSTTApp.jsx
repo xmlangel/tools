@@ -6,6 +6,7 @@ import SimpleTranslationForm from './SimpleTranslationForm';
 import JobRow from './JobRow';
 import axios from 'axios';
 import '../../../App.css';
+import { API_URL } from '../../../config';
 
 function YoutubeSTTApp() {
     const navigate = useNavigate();
@@ -29,7 +30,7 @@ function YoutubeSTTApp() {
 
     const fetchJobs = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/api/jobs');
+            const response = await axios.get(`${API_URL}/api/jobs`);
             setJobs(response.data.jobs || []);
         } catch (err) {
             console.error('Failed to fetch jobs:', err);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../../../config';
 
 const STTForm = ({ onJobCreated }) => {
   const [url, setUrl] = useState('');
@@ -14,11 +15,11 @@ const STTForm = ({ onJobCreated }) => {
 
     try {
       // 설정 저장
-      await axios.post('http://localhost:8000/api/settings', {
+      await axios.post(`${API_URL}/api/settings`, {
         stt_model: model
       });
 
-      const response = await axios.post('http://localhost:8000/api/stt', {
+      const response = await axios.post(`${API_URL}/api/stt`, {
         url,
         model
       });
@@ -37,7 +38,7 @@ const STTForm = ({ onJobCreated }) => {
 
   const loadSettings = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/settings');
+      const response = await axios.get(`${API_URL}/api/settings`);
       if (response.data.stt_model) setModel(response.data.stt_model);
     } catch (err) {
       console.error('Failed to load settings:', err);

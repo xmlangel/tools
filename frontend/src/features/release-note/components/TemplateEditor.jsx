@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { API_URL } from '../../../config';
 
 const TemplateEditor = ({ isOpen, onClose }) => {
     const [template, setTemplate] = useState({
@@ -16,7 +17,7 @@ const TemplateEditor = ({ isOpen, onClose }) => {
 
     const fetchTemplate = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/api/release-note/template');
+            const response = await axios.get(`${API_URL}/api/release-note/template`);
             setTemplate(response.data);
         } catch (err) {
             console.error('Failed to fetch template:', err);
@@ -26,7 +27,7 @@ const TemplateEditor = ({ isOpen, onClose }) => {
     const handleSave = async () => {
         setLoading(true);
         try {
-            await axios.post('http://localhost:8000/api/release-note/template', template);
+            await axios.post(`${API_URL}/api/release-note/template`, template);
             alert('템플릿이 저장되었습니다.');
             onClose();
         } catch (err) {

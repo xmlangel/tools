@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLLM } from '../../../context/LLMContext';
+import { API_URL } from '../../../config';
 
 const PRESETS = {
     default: {
@@ -57,7 +58,7 @@ const SimpleTranslationForm = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:8000/api/translate/simple', {
+            const response = await axios.post(`${API_URL}/api/translate/simple`, {
                 text: inputText,
                 target_lang: targetLang,
                 openwebui_url: selectedConfig.openwebui_url,

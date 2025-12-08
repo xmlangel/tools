@@ -1,8 +1,11 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
   text-align: center;
+  background-color: #1a1a1a;
+  color: rgba(255, 255, 255, 0.87);
 }
 
 .logo {
@@ -44,90 +47,219 @@
   color: #888;
 }
 
+/* Layout Container */
+.layout-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Top Navigation */
+/* Top Navigation */
+.top-nav {
+  display: flex;
+  justify-content: center;
+  /* Center the inner container */
+  padding: 1rem;
+  background: transparent;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  pointer-events: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.nav-content {
+  width: 100%;
+  /* max-width: 1000px; removed to allow full width */
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+  /* Ensure container passes clicks */
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 1rem;
+  pointer-events: auto;
+  /* Re-enable clicks for buttons */
+}
+
+.nav-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: bold;
+  transition: opacity 0.2s;
+}
+
+.nav-btn:hover {
+  opacity: 0.9;
+}
+
+.settings-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.logout-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* App Content */
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 /* App Container */
 .app-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: radial-gradient(circle at top right, #2c3e50 0%, #000000 100%);
+  overflow: hidden;
 }
 
 /* Header */
 .main-header {
   text-align: center;
-  margin-bottom: 4rem;
+  margin-bottom: 1.5rem;
+  animation: fadeInDown 0.8s ease-out;
 }
 
 .main-header h1 {
-  font-size: 3rem;
-  color: #2c3e50;
+  font-size: 3.5rem;
+  background: linear-gradient(135deg, #646cff 0%, #9089fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
   margin-bottom: 1rem;
+  font-weight: 800;
+  letter-spacing: -1px;
 }
 
 .main-header p {
   font-size: 1.2rem;
-  color: #666;
-}
-
-.logout-button {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  z-index: 1000;
-}
-
-.logout-button:hover {
-  background-color: #c82333;
+  color: #a0a0a0;
+  font-weight: 300;
 }
 
 /* Tool Grid */
 .tool-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1000px;
   padding: 1rem;
 }
 
 /* Tool Card */
 .tool-card {
-  background: #3a3a3a;
-  border-radius: 12px;
-  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.87);
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  color: white;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  border: 1px solid #555;
+  position: relative;
+  overflow: hidden;
+  min-height: 220px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .tool-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.4);
-  border-color: #646cff;
+  transform: translateY(-5px) scale(1.02);
+  border-color: rgba(100, 108, 255, 0.5);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.tool-card:hover::before {
+  opacity: 1;
 }
 
 .tool-icon {
   font-size: 3rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+.tool-card:hover .tool-icon {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .tool-card h3 {
-  font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.87);
-  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 .tool-card p {
-  color: #aaa;
-  line-height: 1.5;
+  color: #b0b0b0;
+  line-height: 1.4;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .app-container {
+    height: auto;
+    min-height: 100vh;
+    padding: 1rem;
+  }
+
+  .main-header h1 {
+    font-size: 2.5rem;
+  }
+
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
 }

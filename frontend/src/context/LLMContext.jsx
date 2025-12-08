@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { API_URL } from '../config';
 
 const LLMContext = createContext();
 
@@ -28,7 +29,7 @@ export const LLMProvider = ({ children }) => {
     const fetchConfigs = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('http://localhost:8000/api/llm-configs');
+            const response = await axios.get(`${API_URL}/api/llm-configs`);
             setConfigs(response.data);
 
             // If no config selected and configs exist, select the first one
@@ -44,7 +45,7 @@ export const LLMProvider = ({ children }) => {
 
     const addConfig = async (config) => {
         try {
-            const response = await axios.post('http://localhost:8000/api/llm-configs', config);
+            const response = await axios.post(`${API_URL}/api/llm-configs`, config);
             setConfigs([...configs, response.data]);
             if (!selectedConfigId) {
                 setSelectedConfigId(response.data.id);
@@ -58,7 +59,7 @@ export const LLMProvider = ({ children }) => {
 
     const updateConfig = async (id, config) => {
         try {
-            const response = await axios.put(`http://localhost:8000/api/llm-configs/${id}`, config);
+            const response = await axios.put(`${API_URL}/api/llm-configs/${id}`, config);
             setConfigs(configs.map(c => c.id === id ? response.data : c));
             return response.data;
         } catch (err) {
@@ -69,7 +70,7 @@ export const LLMProvider = ({ children }) => {
 
     const deleteConfig = async (id) => {
         try {
-            await axios.delete(`http://localhost:8000/api/llm-configs/${id}`);
+            await axios.delete(`${API_URL}/api/llm-configs/${id}`);
             setConfigs(configs.filter(c => c.id !== id));
             if (selectedConfigId === id) {
                 setSelectedConfigId(null);

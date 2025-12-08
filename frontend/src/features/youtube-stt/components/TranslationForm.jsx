@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import TranslationTemplateEditor from './TranslationTemplateEditor';
 import { useLLM } from '../../../context/LLMContext';
+import { API_URL } from '../../../config';
 
 const TranslationForm = ({ onJobCreated }) => {
     const [inputFile, setInputFile] = useState('');
@@ -21,7 +22,7 @@ const TranslationForm = ({ onJobCreated }) => {
 
     const fetchFiles = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/api/files');
+            const response = await axios.get(`${API_URL}/api/files`);
             const txtFiles = response.data.files.filter(f => f.name.endsWith('.txt'));
             setFiles(txtFiles);
         } catch (err) {
@@ -31,7 +32,7 @@ const TranslationForm = ({ onJobCreated }) => {
 
     const fetchSTTJobs = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/api/jobs');
+            const response = await axios.get(`${API_URL}/api/jobs`);
             const sttJobsList = response.data.jobs.filter(j => j.type === 'stt');
             setSttJobs(sttJobsList);
         } catch (err) {
@@ -64,7 +65,7 @@ const TranslationForm = ({ onJobCreated }) => {
         try {
             const youtubeUrl = getYouTubeUrlForFile(inputFile);
 
-            const response = await axios.post('http://localhost:8000/api/translate', {
+            const response = await axios.post(`${API_URL}/api/translate`, {
                 input_file: inputFile,
                 target_lang: targetLang,
                 openwebui_url: selectedConfig.openwebui_url,
