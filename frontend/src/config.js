@@ -9,7 +9,7 @@ const getApiUrl = () => {
     }
 
     // Fallback to build-time environment variable (for local development)
-    if (import.meta.env.VITE_API_URL) {
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
         return import.meta.env.VITE_API_URL;
     }
 
@@ -17,12 +17,21 @@ const getApiUrl = () => {
     return 'http://localhost:8000';
 };
 
-// Use a getter to ensure the value is evaluated at runtime, not at module load time
-Object.defineProperty(exports, 'API_URL', {
-    get: getApiUrl
-});
+// Export as a Proxy that calls getApiUrl() when converted to string
+// This ensures the value is evaluated at usage time, not module load time
+const apiUrlHandler = {
+    toString: getApiUrl,
+    valueOf: getApiUrl
+};
 
-export { getApiUrl as API_URL };
+export const API_URL = new Proxy(apiUrlHandler, {
+    get(target, prop) {
+        if (prop === 'toString' || prop === 'valueOf' || prop === Symbol.toPrimitive) {
+            return () => getApiUrl();
+        }
+        return getApiUrl()[prop];
+    }
+});
 
 export default {
     get API_URL() {
