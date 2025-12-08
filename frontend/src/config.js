@@ -4,12 +4,12 @@
 
 const getApiUrl = () => {
     // Check if runtime environment config is available (injected by docker-entrypoint.sh)
-    if (typeof window !== 'undefined' && window.ENV && window.ENV.VITE_API_URL) {
+    if (typeof window !== 'undefined' && window.ENV && window.ENV.VITE_API_URL !== undefined) {
         return window.ENV.VITE_API_URL;
     }
 
     // Fallback to build-time environment variable (for local development)
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL !== undefined) {
         return import.meta.env.VITE_API_URL;
     }
 
