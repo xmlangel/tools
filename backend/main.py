@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import init_db
+from core.storage import init_storage
 from routers import files, jobs, stt, translation, settings, release_note, auth, users, llm_configs
 
 app = FastAPI()
@@ -14,10 +15,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 데이터베이스 초기화
+# 데이터베이스 및 스토리지 초기화
 @app.on_event("startup")
 def on_startup():
     init_db()
+    init_storage()
 
 # Include Routers
 app.include_router(auth.router, prefix="/api", tags=["auth"])
