@@ -1,0 +1,1 @@
+curl -s -X POST http://localhost:8080/api/auth/login \\n  -H 'Content-Type: application/json' \\n  -d '{"username":"admin","password":"admin123"}' | python3 -c "import sys, json; print(json.load(sys.stdin)['accessToken'])"

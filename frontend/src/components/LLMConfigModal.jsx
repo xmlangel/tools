@@ -61,6 +61,10 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
             }
             resetForm();
         } catch (err) {
+            console.error('Save configuration error:', err);
+            if (err.response) {
+                console.error('Error response:', err.response.status, err.response.data);
+            }
             setError(err.response?.data?.detail || 'Failed to save configuration.');
         }
     };

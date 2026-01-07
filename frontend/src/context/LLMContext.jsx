@@ -10,16 +10,40 @@ export const LLMProvider = ({ children }) => {
     const [configs, setConfigs] = useState([]);
     const [selectedConfigId, setSelectedConfigId] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false); // New state to track initialization
 
+    // 1. Initial Load: Fetch configs
     useEffect(() => {
         fetchConfigs();
-        // Load selected config from local storage if exists
-        const savedConfigId = localStorage.getItem('selectedLLMConfigId');
-        if (savedConfigId) {
-            setSelectedConfigId(parseInt(savedConfigId));
-        }
     }, []);
 
+    // 2. Sync: Once configs are loaded, restore selection or default
+    useEffect(() => {
+        if (configs.length > 0 && !isInitialized) {
+            const savedConfigId = localStorage.getItem('selectedLLMConfigId');
+
+            if (savedConfigId) {
+                const parsedId = parseInt(savedConfigId);
+                // Verify the saved ID actually exists in the fetched configs
+                const configExists = configs.some(c => c.id === parsedId);
+                if (configExists) {
+                    setSelectedConfigId(parsedId);
+                } else {
+                    // Saved config no longer exists, default to first
+                    setSelectedConfigId(configs[0].id);
+                }
+            } else {
+                // No saved config, default to first
+                setSelectedConfigId(configs[0].id);
+            }
+            setIsInitialized(true);
+        } else if (configs.length === 0 && !loading) {
+            // Handle case where there are no configs at all
+            setIsInitialized(true);
+        }
+    }, [configs, isInitialized, loading]);
+
+    // 3. Persist: Save selection whenever it changes
     useEffect(() => {
         if (selectedConfigId) {
             localStorage.setItem('selectedLLMConfigId', selectedConfigId);
@@ -31,11 +55,8 @@ export const LLMProvider = ({ children }) => {
         try {
             const response = await axios.get(`${API_URL}/api/llm-configs`);
             setConfigs(response.data);
-
-            // If no config selected and configs exist, select the first one
-            if (!selectedConfigId && response.data.length > 0) {
-                setSelectedConfigId(response.data[0].id);
-            }
+            // Note: We don't set selectedConfigId here anymore to avoid race conditions
+            // The useEffect handling 'isInitialized' will take care of it.
         } catch (err) {
             console.error('Failed to fetch LLM configs:', err);
         } finally {
@@ -44,13 +65,18 @@ export const LLMProvider = ({ children }) => {
     };
 
     const addConfig = async (config) => {
+        console.log('addConfig called with:', config);
         try {
             const response = await axios.post(`${API_URL}/api/llm-configs`, config);
-            setConfigs([...configs, response.data]);
+            console.log('addConfig success:', response.data);
+            const newConfig = response.data;
+            setConfigs(prev => [...prev, newConfig]);
+
+            // If it's the first config, select it automatically
             if (!selectedConfigId) {
-                setSelectedConfigId(response.data.id);
+                setSelectedConfigId(newConfig.id);
             }
-            return response.data;
+            return newConfig;
         } catch (err) {
             console.error('Failed to add LLM config:', err);
             throw err;
@@ -60,7 +86,7 @@ export const LLMProvider = ({ children }) => {
     const updateConfig = async (id, config) => {
         try {
             const response = await axios.put(`${API_URL}/api/llm-configs/${id}`, config);
-            setConfigs(configs.map(c => c.id === id ? response.data : c));
+            setConfigs(prev => prev.map(c => c.id === id ? response.data : c));
             return response.data;
         } catch (err) {
             console.error('Failed to update LLM config:', err);
@@ -71,9 +97,19 @@ export const LLMProvider = ({ children }) => {
     const deleteConfig = async (id) => {
         try {
             await axios.delete(`${API_URL}/api/llm-configs/${id}`);
-            setConfigs(configs.filter(c => c.id !== id));
+
+            setConfigs(prev => {
+                const newConfigs = prev.filter(c => c.id !== id);
+                return newConfigs;
+            });
+
             if (selectedConfigId === id) {
                 setSelectedConfigId(null);
+                // Logic to select next available could go here, or let the user select
+                // Ideally, we might want to auto-select the first one if available:
+                // But we can't access the *new* state of configs here immediately due to closure.
+                // We can do it optimistically or useEffect, but simpler is fine for now:
+                localStorage.removeItem('selectedLLMConfigId');
             }
         } catch (err) {
             console.error('Failed to delete LLM config:', err);
