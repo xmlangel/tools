@@ -41,6 +41,12 @@ function YoutubeSTTApp() {
 
     const addJob = (job) => {
         setJobs(prev => [job, ...prev]);
+        // Auto-switch tab to show the new job
+        if (job.type === 'translate') {
+            setJobTab('translate');
+        } else if (job.type === 'stt') {
+            setJobTab('stt');
+        }
     };
 
     const handleJobUpdate = (updatedJob) => {

@@ -59,7 +59,7 @@ async def start_translation_job(request: TranslationRequest, background_tasks: B
         "youtube_url": job.youtube_url
     }
 
-@router.get("/template")
+@router.get("/translate/template")
 async def get_current_template():
     from services.translation_template_service import get_template
     return get_template()
@@ -68,7 +68,7 @@ class TemplateRequest(BaseModel):
     system_prompt: str
     user_prompt_template: str
 
-@router.post("/template")
+@router.post("/translate/template")
 async def update_template(request: TemplateRequest):
     from services.translation_template_service import save_template
     success = save_template(request.dict())
