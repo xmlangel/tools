@@ -1,5 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
 from pydantic import BaseModel
+import json
 from sqlalchemy.orm import Session
 from core.database import get_db, Job
 from core.storage import get_file_content
@@ -46,7 +47,17 @@ async def start_translation_job(request: TranslationRequest, background_tasks: B
         request.target_lang
     )
 
-    return {"job_id": job.id, "status": "pending"}
+    return {
+        "id": job.id,
+        "type": job.type,
+        "status": job.status,
+        "progress": job.progress,
+        "input": job.input_data,
+        "output": {},
+        "created_at": job.created_at,
+        "error": job.error_message,
+        "youtube_url": job.youtube_url
+    }
 
 @router.get("/template")
 async def get_current_template():
