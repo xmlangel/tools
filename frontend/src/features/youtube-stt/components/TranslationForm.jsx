@@ -83,6 +83,29 @@ const TranslationForm = ({ onJobCreated }) => {
         }
     };
 
+    const [viewingFile, setViewingFile] = useState(null);
+    const [fileContent, setFileContent] = useState('');
+
+    const handlePreview = async () => {
+        if (!inputFile) {
+            alert('Please select a file first.');
+            return;
+        }
+
+        try {
+            const response = await axios.get(`${API_URL}/api/view/${inputFile}`);
+            setFileContent(response.data.content);
+            setViewingFile(inputFile);
+        } catch (err) {
+            alert('Failed to load file content: ' + (err.response?.data?.detail || err.message));
+        }
+    };
+
+    const closePreview = () => {
+        setViewingFile(null);
+        setFileContent('');
+    };
+
     return (
         <div className="card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -138,6 +161,7 @@ const TranslationForm = ({ onJobCreated }) => {
                             <h4 style={{ margin: '0 0 0.5rem 0', color: '#646cff' }}>2️⃣ 파일 선택 및 번역</h4>
                             <ul style={{ margin: 0, paddingLeft: '1.5rem', color: '#ccc' }}>
                                 <li><strong>Input File</strong>: MinIO에 저장된 텍스트 파일을 선택합니다.</li>
+                                <li><strong>👁️ Preview</strong>: 선택한 파일의 내용을 미리 확인할 수 있습니다.</li>
                                 <li><strong>Target Language</strong>: 번역할 언어를 선택합니다.</li>
                                 <li><strong>Start Translation</strong>: 번역 작업을 시작합니다.</li>
                             </ul>
@@ -178,12 +202,34 @@ const TranslationForm = ({ onJobCreated }) => {
 
                 <div className="form-group">
                     <label>Input File (from MinIO)</label>
-                    <select value={inputFile} onChange={(e) => setInputFile(e.target.value)} required>
-                        <option value="">Select a file...</option>
-                        {files.map(file => (
-                            <option key={file.name} value={file.name}>{file.name}</option>
-                        ))}
-                    </select>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <select
+                            value={inputFile}
+                            onChange={(e) => setInputFile(e.target.value)}
+                            required
+                            style={{ flex: 1 }}
+                        >
+                            <option value="">Select a file...</option>
+                            {files.map(file => (
+                                <option key={file.name} value={file.name}>{file.name}</option>
+                            ))}
+                        </select>
+                        <button
+                            type="button"
+                            onClick={handlePreview}
+                            className="view-btn"
+                            disabled={!inputFile}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                color: inputFile ? '#4caf50' : '#666',
+                                borderColor: inputFile ? '#4caf50' : '#666',
+                                cursor: inputFile ? 'pointer' : 'not-allowed'
+                            }}
+                            title="Preview file content"
+                        >
+                            👁️
+                        </button>
+                    </div>
                 </div>
 
                 <div className="form-group">
@@ -209,6 +255,21 @@ const TranslationForm = ({ onJobCreated }) => {
                 isOpen={isTemplateModalOpen}
                 onClose={() => setIsTemplateModalOpen(false)}
             />
+
+            {/* File Preview Modal */}
+            {viewingFile && (
+                <div className="modal-overlay" onClick={closePreview}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3>File Preview: {viewingFile}</h3>
+                            <button className="close-btn" onClick={closePreview}>✕</button>
+                        </div>
+                        <div className="modal-body">
+                            <pre className="text-content">{fileContent}</pre>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
