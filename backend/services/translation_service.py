@@ -68,6 +68,9 @@ def translate_chunk(text, api_url, api_key, model, target_lang='ko', system_prom
     
     user_prompt = user_prompt_template.replace("{text}", text)
     
+    logger.info(f"System Prompt: {system_prompt}")
+    logger.info(f"User Prompt: {user_prompt[:500]}...") # Log first 500 chars to avoid clutter
+    
     try:
         return send_llm_request(api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
     except Exception as e:

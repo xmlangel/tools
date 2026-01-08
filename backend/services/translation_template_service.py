@@ -7,12 +7,12 @@ logger = setup_logger("translation_template_service")
 TEMPLATE_FILE = "translation_template.json"
 
 DEFAULT_TEMPLATE = {
-    "system_prompt": "You are a professional translator. Translate the following text into {target_lang} naturally.",
-    "user_prompt_template": """다음 텍스트를 {target_lang}로 번역해줘. 문맥을 고려해서 자연스럽게 번역하고, 번역된 결과만 출력해. 설명이나 잡담은 하지 마.
+    "system_prompt": "You are a professional translator. Translate the input text into {target_lang}. Return ONLY the translated text. Do not include any explanations, introductory text, or closing remarks.",
+    "user_prompt_template": """Translate the following text into {target_lang}. Maintain the original tone and context. Output ONLY the translation.
 
-[텍스트 시작]
+[Source Text Start]
 {text}
-[텍스트 끝]"""
+[Source Text End]"""
 }
 
 def get_template():

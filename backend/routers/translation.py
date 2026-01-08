@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
 from pydantic import BaseModel
 import json
 from sqlalchemy.orm import Session
+from typing import Optional
 from core.database import get_db, Job
 from core.storage import get_file_content
 from services.translation_service import process_translation_job
@@ -14,7 +15,7 @@ class TranslationRequest(BaseModel):
     openwebui_url: str
     api_key: str
     model: str
-    youtube_url: str = None  # Optional YouTube URL from original STT job
+    youtube_url: Optional[str] = None  # Optional YouTube URL from original STT job
 
 @router.post("/translate")
 async def start_translation_job(request: TranslationRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
