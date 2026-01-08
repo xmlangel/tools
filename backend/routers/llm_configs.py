@@ -12,6 +12,7 @@ class LLMConfigBase(BaseModel):
     openwebui_url: str
     api_key: str
     model: str
+    is_default: bool = False
 
 class LLMConfigCreate(LLMConfigBase):
     pass
@@ -21,6 +22,7 @@ class LLMConfigUpdate(BaseModel):
     openwebui_url: Optional[str] = None
     api_key: Optional[str] = None
     model: Optional[str] = None
+    is_default: Optional[bool] = None
 
 class LLMConfigResponse(LLMConfigBase):
     id: int
@@ -40,6 +42,9 @@ def create_llm_config(config: LLMConfigCreate, db: Session = Depends(get_db)):
     if db_config:
         raise HTTPException(status_code=400, detail="Config with this name already exists")
     
+    if config.is_default:
+        db.query(LLMConfig).filter(LLMConfig.is_default == True).update({LLMConfig.is_default: False})
+
     new_config = LLMConfig(**config.dict())
     db.add(new_config)
     db.commit()
@@ -53,6 +58,10 @@ def update_llm_config(config_id: int, config: LLMConfigUpdate, db: Session = Dep
         raise HTTPException(status_code=404, detail="Config not found")
     
     update_data = config.dict(exclude_unset=True)
+
+    if update_data.get("is_default"):
+        db.query(LLMConfig).filter(LLMConfig.id != config_id).filter(LLMConfig.is_default == True).update({LLMConfig.is_default: False})
+
     for key, value in update_data.items():
         setattr(db_config, key, value)
     

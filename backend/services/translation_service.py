@@ -77,6 +77,26 @@ def translate_chunk(text, api_url, api_key, model, target_lang='ko', system_prom
         logger.error(f"Translation error: {e}")
         return f"[Translation Failed] {text}"
 
+def summarize_chunk(text, api_url, api_key, model, target_lang='ko'):
+    # Map target_lang code to name
+    lang_map = {
+        'ko': 'Korean',
+        'en': 'English',
+        'ja': 'Japanese',
+        'zh': 'Chinese',
+        'auto': 'Korean' # Default to Korean for auto summary
+    }
+    target_name = lang_map.get(target_lang, 'Korean')
+    
+    system_prompt = f"You are a professional assistant. Summarize the following text paragraph by paragraph in {target_name}. Return ONLY the summary. Do not include any explanations."
+    user_prompt = f"Summarize the following text in {target_name}:\n\n{text}"
+    
+    try:
+        return send_llm_request(api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
+    except Exception as e:
+        logger.error(f"Summary error: {e}")
+        return f"[Summary Failed] {text[:50]}..."
+
 def process_translation_job(job_id: int, text_content: str, api_url: str, api_key: str, model: str, original_filename: str, target_lang: str = 'ko'):
     logger.info(f"Starting Translation job {job_id} with model {model} for file {original_filename} to {target_lang}")
     db: Session = SessionLocal()
@@ -93,6 +113,7 @@ def process_translation_job(job_id: int, text_content: str, api_url: str, api_ke
         chunks = split_text(text_content)
         logger.info(f"Job {job_id}: Split text into {len(chunks)} chunks")
         translated_parts = []
+        summary_parts = []
         
         total_chunks = len(chunks)
         for i, chunk in enumerate(chunks):
@@ -105,6 +126,11 @@ def process_translation_job(job_id: int, text_content: str, api_url: str, api_ke
             logger.info(f"Job {job_id}: Translating chunk {i+1}/{total_chunks} ({len(chunk)} chars)...")
             translated = translate_chunk(chunk, api_url, api_key, model, target_lang)
             translated_parts.append(translated)
+
+            # Generate summary for the chunk
+            logger.info(f"Job {job_id}: Summarizing chunk {i+1}/{total_chunks}...")
+            summary_chunk_text = summarize_chunk(chunk, api_url, api_key, model, target_lang)
+            summary_parts.append(summary_chunk_text)
             
             # 진행률 업데이트 (10% ~ 90%)
             progress = 10 + int((i + 1) / total_chunks * 80)
@@ -114,18 +140,26 @@ def process_translation_job(job_id: int, text_content: str, api_url: str, api_ke
             time.sleep(0.5)
             
         final_translation = "\n\n".join(translated_parts)
+        final_summary = "\n\n".join(summary_parts)
         
         # Upload to MinIO
         # Generate output filename: original_filename_translation.txt
         name_without_ext = original_filename.rsplit('.', 1)[0]
         output_filename = f"{name_without_ext}_translation.txt"
+        summary_filename = f"{name_without_ext}_summary.txt"
         
         logger.info(f"Job {job_id}: Uploading result to MinIO as {output_filename}")
         upload_stream(final_translation.encode('utf-8'), output_filename, "text/plain")
+
+        logger.info(f"Job {job_id}: Uploading summary to MinIO as {summary_filename}")
+        upload_stream(final_summary.encode('utf-8'), summary_filename, "text/plain")
         
         job.status = "completed"
         job.progress = 100
-        job.output_files = json.dumps({"translated_text": output_filename})
+        job.output_files = json.dumps({
+            "translated_text": output_filename,
+            "summary": summary_filename
+        })
         db.commit()
         logger.info(f"Job {job_id}: Completed successfully")
 

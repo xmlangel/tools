@@ -20,6 +20,16 @@ const TranslationForm = ({ onJobCreated }) => {
         fetchSTTJobs();
     }, []);
 
+    // Auto-select default config
+    useEffect(() => {
+        if (!selectedConfigId && configs.length > 0) {
+            const defaultConfig = configs.find(c => c.is_default);
+            if (defaultConfig) {
+                setSelectedConfigId(defaultConfig.id);
+            }
+        }
+    }, [configs, selectedConfigId, setSelectedConfigId]);
+
     const fetchFiles = async () => {
         try {
             const response = await axios.get(`${API_URL}/api/files`);

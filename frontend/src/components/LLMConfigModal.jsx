@@ -8,7 +8,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
         name: '',
         openwebui_url: '',
         api_key: '',
-        model: ''
+        model: '',
+        is_default: false
     });
     const [error, setError] = useState('');
 
@@ -24,7 +25,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
             name: '',
             openwebui_url: '',
             api_key: '',
-            model: ''
+            model: '',
+            is_default: false
         });
         setError('');
     };
@@ -35,7 +37,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
             name: config.name,
             openwebui_url: config.openwebui_url,
             api_key: config.api_key,
-            model: config.model
+            model: config.model,
+            is_default: config.is_default || false
         });
     };
 
@@ -148,6 +151,16 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                 style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
                             />
                         </div>
+                        <div className="form-group" style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                            <input
+                                type="checkbox"
+                                id="is_default"
+                                checked={formData.is_default}
+                                onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
+                                style={{ marginRight: '0.5rem' }}
+                            />
+                            <label htmlFor="is_default" style={{ cursor: 'pointer' }}>Set as Default Configuration</label>
+                        </div>
                         <div style={{ display: 'flex', gap: '1rem' }}>
                             <button type="submit" className="save-btn" style={{ padding: '0.5rem 1rem', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                                 {editingId ? 'Update' : 'Add'}
@@ -180,6 +193,16 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                 }}>
                                     <div>
                                         <strong style={{ color: 'var(--primary-color)' }}>{config.name}</strong>
+                                        {config.is_default && (
+                                            <span style={{
+                                                marginLeft: '0.5rem',
+                                                fontSize: '0.75rem',
+                                                backgroundColor: 'var(--primary-color)',
+                                                color: 'white',
+                                                padding: '0.1rem 0.4rem',
+                                                borderRadius: '4px'
+                                            }}>Default</span>
+                                        )}
                                         <div style={{ fontSize: '0.85rem', color: '#aaa' }}>
                                             {config.model} @ {config.openwebui_url}
                                         </div>

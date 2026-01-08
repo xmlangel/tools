@@ -130,10 +130,10 @@ const JobRow = ({ job, onCompleted }) => {
                                     const downloadUrl = `${API_URL}/api/download/${filename}`;
                                     return (
                                         <div key={key} className="action-group">
-                                            {(key === 'text' || key === 'translated_text') ? (
+                                            {(key === 'text' || key === 'translated_text' || key === 'summary') ? (
                                                 <>
                                                     <button onClick={() => handleViewText(filename, key)} className="view-btn-sm" title={`View ${key}`}>
-                                                        📄
+                                                        {key === 'summary' ? '📑' : '📄'}
                                                     </button>
                                                     <a href={downloadUrl} target="_blank" rel="noopener noreferrer" className="download-btn-sm" title={`Download ${key}`}>
                                                         ⬇️
