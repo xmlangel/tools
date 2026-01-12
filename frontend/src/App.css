@@ -263,3 +263,10 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Text Alignment Fixes */
+.text-content, 
+.modal-body,
+textarea {
+  text-align: left;
+}
