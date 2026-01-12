@@ -6,6 +6,7 @@ from core.storage import upload_stream
 from core.logger import setup_logger
 from services.llm_service import send_llm_request
 from services.translation_template_service import get_template, DEFAULT_TEMPLATE
+from services.summary_template_service import get_template as get_summary_template, DEFAULT_TEMPLATE as DEFAULT_SUMMARY_TEMPLATE
 
 logger = setup_logger("translation_service")
 
@@ -78,6 +79,9 @@ def translate_chunk(text, api_url, api_key, model, target_lang='ko', system_prom
         return f"[Translation Failed] {text}"
 
 def summarize_chunk(text, api_url, api_key, model, target_lang='ko'):
+    # Get the global summary template
+    template = get_summary_template()
+    
     # Map target_lang code to name
     lang_map = {
         'ko': 'Korean',
@@ -88,8 +92,18 @@ def summarize_chunk(text, api_url, api_key, model, target_lang='ko'):
     }
     target_name = lang_map.get(target_lang, 'Korean')
     
-    system_prompt = f"You are a professional assistant. Summarize the following text paragraph by paragraph in {target_name}. Return ONLY the summary. Do not include any explanations."
-    user_prompt = f"Summarize the following text in {target_name}:\n\n{text}"
+    # Process System Prompt
+    system_prompt = template.get("system_prompt", DEFAULT_SUMMARY_TEMPLATE["system_prompt"])
+    
+    # Replace language placeholder if present, or "Korean" for backward compatibility if using default-ish prompt
+    # We'll allow {target_lang} in the template.
+    system_prompt = system_prompt.replace("{target_lang}", target_name)
+    
+    # Process User Prompt
+    user_prompt_template = template.get("user_prompt_template", DEFAULT_SUMMARY_TEMPLATE["user_prompt_template"])
+    user_prompt_template = user_prompt_template.replace("{target_lang}", target_name)
+    
+    user_prompt = user_prompt_template.replace("{text}", text)
     
     try:
         return send_llm_request(api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
