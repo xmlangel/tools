@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import init_db
 from core.storage import init_storage
-from routers import files, jobs, stt, translation, settings, release_note, auth, users, llm_configs
+from routers import files, jobs, stt, translation, settings, release_note, auth, users, llm_configs, summary_template
 
 app = FastAPI()
 
@@ -31,6 +31,7 @@ app.include_router(translation.router, prefix="/api", tags=["translation"])
 app.include_router(settings.router, prefix="/api", tags=["settings"])
 app.include_router(release_note.router, prefix="/api/release-note", tags=["release-note"])
 app.include_router(llm_configs.router, prefix="/api", tags=["llm-configs"])
+app.include_router(summary_template.router, prefix="/api", tags=["summary-template"])
 
 @app.get("/")
 def read_root():

@@ -2,10 +2,12 @@ import os
 import json
 import yt_dlp
 import whisper
+import re
 from sqlalchemy.orm import Session
 from core.database import Job, SessionLocal
 from core.storage import upload_file, upload_stream
 from core.logger import setup_logger
+from services.summary_service import generate_summary
 
 logger = setup_logger("stt_service")
 
@@ -34,6 +36,79 @@ def download_audio(youtube_url, output_path):
         ydl.download([youtube_url])
     logger.info("Download complete")
     return output_path + ".mp3"
+
+def clean_vtt_content(content):
+    lines = content.splitlines()
+    text = []
+    seen = set()
+    # Simple timestamp matcher: 00:00:00.000 --> 00:00:00.000
+    timestamp_pattern = re.compile(r'\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}')
+    
+    for line in lines:
+        line = line.strip()
+        if not line or line == "WEBVTT":
+            continue
+        if timestamp_pattern.search(line):
+            continue
+        if line.isdigit() and "-->" not in line: 
+             continue
+             
+        # Remove HTML-like tags
+        clean_line = re.sub(r'<[^>]+>', '', line)
+        if clean_line and clean_line not in seen:
+            text.append(clean_line)
+            seen.add(clean_line)
+            
+    return " ".join(text)
+
+def download_manual_subtitle(youtube_url, base_path):
+    # Check logical existence first
+    ydl_opts_check = {'quiet': True, 'no_warnings': True, 'skip_download': True}
+    target_lang = None
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts_check) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            subtitles = info.get('subtitles', {})
+            # Priorities: en, en-US, en-GB
+            for lang in ['en', 'en-US', 'en-GB']:
+                if lang in subtitles:
+                    target_lang = lang
+                    break
+    except Exception as e:
+        logger.error(f"Error checking subtitles: {e}")
+        return None
+
+    if not target_lang:
+        return None
+        
+    logger.info(f"Found manual subtitles for language: {target_lang}")
+    
+    # Download
+    ydl_opts_dl = {
+        'skip_download': True,
+        'writesubtitles': True,
+        'subtitleslangs': [target_lang],
+        'subtitlesformat': 'vtt',
+        'outtmpl': base_path, # yt-dlp will append .lang.vtt
+        'quiet': True,
+        'no_warnings': True
+    }
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts_dl) as ydl:
+            ydl.download([youtube_url])
+            
+        expected_file = f"{base_path}.{target_lang}.vtt"
+        if os.path.exists(expected_file):
+            with open(expected_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            os.remove(expected_file)
+            return clean_vtt_content(content)
+    except Exception as e:
+        logger.error(f"Error downloading subtitle: {e}")
+        return None
+        
+    return None
 
 def process_stt_job(job_id: int, youtube_url: str, model_size: str):
     logger.info(f"Starting STT job {job_id} for URL: {youtube_url} with model: {model_size}")
@@ -74,24 +149,44 @@ def process_stt_job(job_id: int, youtube_url: str, model_size: str):
             logger.info(f"Job {job_id}: Cancelled by user")
             return
 
-        # 2. Transcribe
-        logger.info(f"Job {job_id}: Loading Whisper model ({model_size})...")
-        model = whisper.load_model(model_size)
-        job.progress = 60
-        db.commit()
+        # 2. Check for manual subtitles first
+        logger.info(f"Job {job_id}: Checking for existing subtitles...")
+        subtitle_text = download_manual_subtitle(youtube_url, temp_audio_path.replace('.mp3', ''))
         
-        logger.info(f"Job {job_id}: Transcribing audio...")
-        result = model.transcribe(final_audio_path)
-        text = result["text"].strip()
-        logger.info(f"Job {job_id}: Transcription complete. Length: {len(text)} chars")
+        text = ""
+        if subtitle_text:
+             logger.info(f"Job {job_id}: Used existing manual subtitles. Skipping Whisper.")
+             text = subtitle_text
+             job.progress = 90 # Jump progress
+        else:
+            # 3. Transcribe with Whisper (Fallback)
+            logger.info(f"Job {job_id}: No suitable subtitles found. Loading Whisper model ({model_size})...")
+            model = whisper.load_model(model_size)
+            job.progress = 60
+            db.commit()
+            
+            logger.info(f"Job {job_id}: Transcribing audio...")
+            result = model.transcribe(final_audio_path)
+            text = result["text"].strip()
+            
+        logger.info(f"Job {job_id}: Transcription/Subtitle extraction complete. Length: {len(text)} chars")
         
         job.progress = 90
+
         db.commit()
 
         # Upload Text to MinIO
         text_object_name = f"{base_filename}.txt"
         logger.info(f"Job {job_id}: Uploading text to MinIO as {text_object_name}...")
         upload_stream(text.encode('utf-8'), text_object_name, "text/plain")
+        
+        # 4. Generate Summary
+        logger.info(f"Job {job_id}: Generating summary...")
+        summary_text = generate_summary(text)
+        summary_object_name = f"{base_filename}_summary.txt"
+        
+        logger.info(f"Job {job_id}: Uploading summary to MinIO as {summary_object_name}...")
+        upload_stream(summary_text.encode('utf-8'), summary_object_name, "text/plain")
 
         # Cleanup local files
         if os.path.exists(final_audio_path):
@@ -101,7 +196,11 @@ def process_stt_job(job_id: int, youtube_url: str, model_size: str):
         # Update Job
         job.status = "completed"
         job.progress = 100
-        job.output_files = json.dumps({"audio": audio_object_name, "text": text_object_name})
+        job.output_files = json.dumps({
+            "audio": audio_object_name, 
+            "text": text_object_name,
+            "summary": summary_object_name
+        })
         db.commit()
         logger.info(f"Job {job_id}: Completed successfully")
 

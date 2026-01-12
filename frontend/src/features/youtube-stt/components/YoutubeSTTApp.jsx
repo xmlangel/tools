@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import STTForm from './STTForm';
 import TranslationForm from './TranslationForm';
 import SimpleTranslationForm from './SimpleTranslationForm';
+import SummaryTemplateForm from './SummaryTemplateForm';
 import JobRow from './JobRow';
 import axios from 'axios';
 import '../../../App.css';
@@ -152,6 +153,12 @@ function YoutubeSTTApp() {
                 >
                     Simple Translation
                 </button>
+                <button
+                    className={activeTab === 'summary-template' ? 'active' : ''}
+                    onClick={() => setActiveTab('summary-template')}
+                >
+                    Summary Template
+                </button>
             </div>
 
             <div className="content">
@@ -160,8 +167,11 @@ function YoutubeSTTApp() {
                         <STTForm onJobCreated={addJob} />
                     ) : activeTab === 'translate' ? (
                         <TranslationForm onJobCreated={addJob} />
-                    ) : (
+
+                    ) : activeTab === 'simple-translate' ? (
                         <SimpleTranslationForm />
+                    ) : (
+                        <SummaryTemplateForm />
                     )}
                 </div>
 
