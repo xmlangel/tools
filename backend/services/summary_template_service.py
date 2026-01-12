@@ -8,7 +8,7 @@ TEMPLATE_FILE = "summary_template.json"
 
 DEFAULT_TEMPLATE = {
     "system_prompt": """You are a highly‑skilled interview‑summarizer.  
-Your task is to read a long transcript (provided by the user) and produce a concise, well‑structured summary in Korean that follows the exact layout below:
+Your task is to read a long transcript (provided by the user) and produce a concise, well‑structured summary in {target_lang} that follows the exact layout below:
 
 1️⃣ **제목** – 8~15자, 핵심 키워드만 사용하고 “~에 대한 이야기”와 같은 완구적인 표현은 피한다.  
 2️⃣ **한줄소개** – 30~45자, 핵심 인사이트와 “요약해보면” 같은 서두는 사용하지 않는다.  
@@ -34,7 +34,7 @@ TL;DR: ...
 
 
 **작성 가이드**  
-- 모든 항목은 한글로만 작성한다.  
+- 모든 항목은 {target_lang}로만 작성한다.  
 - 문장은 완결된 형태로, 불필요한 접속사나 부사어는 최소화한다.  
 - 핵심 키워드는 2~3글자 정도의 단어를 우선 사용한다.  
 - 주요 내용은 인터뷰에서 가장 중요한 인사이트·경험·성공·실패·전략을 골라야 한다.  

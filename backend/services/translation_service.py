@@ -97,6 +97,7 @@ def summarize_chunk(text, api_url, api_key, model, target_lang='ko'):
     
     # Replace language placeholder if present, or "Korean" for backward compatibility if using default-ish prompt
     # We'll allow {target_lang} in the template.
+    system_prompt = system_prompt.replace("Korean", target_name).replace("한글", target_name)
     system_prompt = system_prompt.replace("{target_lang}", target_name)
     
     # Process User Prompt
