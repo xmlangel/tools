@@ -61,6 +61,38 @@ const TranslationForm = ({ onJobCreated }) => {
         return sttJob?.youtube_url || null;
     };
 
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Check file extension/type if strictly needed, but backend handles it.
+        const formData = new FormData();
+        formData.append('file', file);
+
+        setLoading(true);
+        try {
+            const response = await axios.post(`${API_URL}/api/upload`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            alert('File uploaded successfully!');
+
+            // Refresh file list and select the new file
+            await fetchFiles();
+            setInputFile(response.data.filename);
+
+        } catch (err) {
+            console.error('Upload failed:', err);
+            alert('Failed to upload file: ' + (err.response?.data?.detail || err.message));
+        } finally {
+            setLoading(false);
+            // Clear the input value so the same file can be selected again if needed
+            e.target.value = null;
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -212,7 +244,7 @@ const TranslationForm = ({ onJobCreated }) => {
 
                 <div className="form-group">
                     <label>Input File (from MinIO)</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                         <select
                             value={inputFile}
                             onChange={(e) => setInputFile(e.target.value)}
@@ -224,16 +256,42 @@ const TranslationForm = ({ onJobCreated }) => {
                                 <option key={file.name} value={file.name}>{file.name}</option>
                             ))}
                         </select>
+
+                        {/* File Upload Input */}
+                        <label
+                            className="save-btn"
+                            style={{
+                                cursor: 'pointer',
+                                margin: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '0.5rem 1rem',
+                                fontSize: '0.9rem'
+                            }}
+                            title="Upload new file to MinIO"
+                        >
+                            📤 Upload
+                            <input
+                                type="file"
+                                onChange={handleFileUpload}
+                                style={{ display: 'none' }}
+                                accept=".txt,.md,.vtt,.srt" // Suggest text-related files
+                            />
+                        </label>
+
                         <button
                             type="button"
                             onClick={handlePreview}
                             className="view-btn"
                             disabled={!inputFile}
                             style={{
-                                padding: '0.5rem 1rem',
+                                padding: '0.5rem 0.8rem', // Adjusted padding
                                 color: inputFile ? '#4caf50' : '#666',
                                 borderColor: inputFile ? '#4caf50' : '#666',
-                                cursor: inputFile ? 'pointer' : 'not-allowed'
+                                cursor: inputFile ? 'pointer' : 'not-allowed',
+                                display: 'flex',
+                                alignItems: 'center'
                             }}
                             title="Preview file content"
                         >

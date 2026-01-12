@@ -1,10 +1,30 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import StreamingResponse
-from core.storage import list_files, get_file_url, get_file_stream, get_file_content
+from core.storage import list_files, get_file_url, get_file_stream, get_file_content, upload_stream
 import mimetypes
 import urllib.parse
 
 router = APIRouter()
+
+@router.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    try:
+        content = await file.read()
+        filename = file.filename
+        
+        # Upload to MinIO
+        # Determine content type
+        content_type = file.content_type or "application/octet-stream"
+        
+        object_name = upload_stream(content, filename, content_type)
+        
+        return {
+            "filename": object_name, 
+            "size": len(content), 
+            "message": "File uploaded successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @router.get("/files")
 def list_minio_files():
