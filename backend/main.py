@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from core.database import init_db
 from core.storage import init_storage
+from core.init_default_user import create_default_user
 from routers import files, jobs, stt, translation, settings, release_note, auth, users, llm_configs, summary_template
 
 app = FastAPI()
@@ -20,6 +21,7 @@ app.add_middleware(
 def on_startup():
     init_db()
     init_storage()
+    create_default_user()  # 기본 관리자 계정 생성
 
 # Include Routers
 app.include_router(auth.router, prefix="/api", tags=["auth"])
