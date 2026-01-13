@@ -4,10 +4,11 @@ import yt_dlp
 import whisper
 import re
 from sqlalchemy.orm import Session
-from core.database import Job, SessionLocal
+from core.database import Job, SessionLocal, LLMConfig
 from core.storage import upload_file, upload_stream
 from core.logger import setup_logger
 from services.summary_service import generate_summary
+from services.translation_service import translate_chunk, split_text
 
 logger = setup_logger("stt_service")
 
@@ -188,6 +189,47 @@ def process_stt_job(job_id: int, youtube_url: str, model_size: str):
         logger.info(f"Job {job_id}: Uploading summary to MinIO as {summary_object_name}...")
         upload_stream(summary_text.encode('utf-8'), summary_object_name, "text/plain")
 
+        # 5. Generate Korean Translation
+        translation_object_name = None
+        try:
+            logger.info(f"Job {job_id}: Generating Korean translation...")
+            
+            # Get default LLM config
+            llm_config = db.query(LLMConfig).filter(LLMConfig.is_default == True).first()
+            if not llm_config:
+                # If no default, try to get any config
+                llm_config = db.query(LLMConfig).first()
+            
+            if llm_config:
+                # Split text into chunks for translation
+                chunks = split_text(text)
+                logger.info(f"Job {job_id}: Split text into {len(chunks)} chunks for translation")
+                
+                translated_parts = []
+                for i, chunk in enumerate(chunks):
+                    logger.info(f"Job {job_id}: Translating chunk {i+1}/{len(chunks)}...")
+                    translated = translate_chunk(
+                        chunk,
+                        llm_config.openwebui_url,
+                        llm_config.api_key,
+                        llm_config.model,
+                        target_lang='ko'
+                    )
+                    translated_parts.append(translated)
+                
+                final_translation = "\n\n".join(translated_parts)
+                
+                # Upload translation to MinIO
+                translation_object_name = f"{base_filename}_translation.txt"
+                logger.info(f"Job {job_id}: Uploading translation to MinIO as {translation_object_name}...")
+                upload_stream(final_translation.encode('utf-8'), translation_object_name, "text/plain")
+                logger.info(f"Job {job_id}: Translation completed successfully")
+            else:
+                logger.warning(f"Job {job_id}: No LLM configuration found. Skipping translation.")
+        except Exception as e:
+            logger.error(f"Job {job_id}: Translation failed: {e}", exc_info=True)
+            # Continue even if translation fails
+
         # Cleanup local files
         if os.path.exists(final_audio_path):
             os.remove(final_audio_path)
@@ -196,11 +238,17 @@ def process_stt_job(job_id: int, youtube_url: str, model_size: str):
         # Update Job
         job.status = "completed"
         job.progress = 100
-        job.output_files = json.dumps({
+        
+        output_data = {
             "audio": audio_object_name, 
             "text": text_object_name,
             "summary": summary_object_name
-        })
+        }
+        
+        if translation_object_name:
+            output_data["translation"] = translation_object_name
+        
+        job.output_files = json.dumps(output_data)
         db.commit()
         logger.info(f"Job {job_id}: Completed successfully")
 

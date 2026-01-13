@@ -130,7 +130,7 @@ const JobRow = ({ job, onCompleted }) => {
                                     const downloadUrl = `${API_URL}/api/download/${filename}`;
                                     return (
                                         <div key={key} className="action-group">
-                                            {(key === 'text' || key === 'translated_text' || key === 'summary') ? (
+                                            {(key === 'text' || key === 'translated_text' || key === 'translation' || key === 'summary') ? (
                                                 <>
                                                     <button onClick={() => handleViewText(filename, key)} className="view-btn-sm" title={`View ${key}`}>
                                                         {key === 'summary' ? '📑' : '📄'}
