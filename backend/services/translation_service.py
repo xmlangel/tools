@@ -46,11 +46,8 @@ def translate_chunk(text, api_url, api_key, model, target_lang='ko', system_prom
         system_prompt = system_prompt_override
     else:
         system_prompt = template.get("system_prompt", DEFAULT_TEMPLATE["system_prompt"])
-        # Only do replacement if using default/template prompt
-        # Replace language references in prompts
-        system_prompt = system_prompt.replace("Korean", target_name).replace("한국어", target_name)
 
-    # Always replace {target_lang} placeholder if present (even in override)
+    # Always replace {target_lang} placeholder with the actual target language name
     system_prompt = system_prompt.replace("{target_lang}", target_name)
     
     # Add auto-detection instruction if target is auto
@@ -60,17 +57,14 @@ def translate_chunk(text, api_url, api_key, model, target_lang='ko', system_prom
 
     user_prompt_template = template.get("user_prompt_template", DEFAULT_TEMPLATE["user_prompt_template"])
     
-    # We still need to replace target language in user prompt if it's the default one
-    if not system_prompt_override:
-        user_prompt_template = user_prompt_template.replace("Korean", target_name).replace("한국어", target_name)
-    
-    # Always replace {target_lang} placeholder in user prompt
+    # Always replace {target_lang} placeholder with the actual target language name
     user_prompt_template = user_prompt_template.replace("{target_lang}", target_name)
     
     user_prompt = user_prompt_template.replace("{text}", text)
     
+    logger.info(f"Target Language: {target_lang} ({target_name})")
     logger.info(f"System Prompt: {system_prompt}")
-    logger.info(f"User Prompt: {user_prompt[:500]}...") # Log first 500 chars to avoid clutter
+    logger.info(f"User Prompt (first 1000 chars): {user_prompt[:1000]}...")
     
     try:
         return send_llm_request(api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
@@ -95,9 +89,7 @@ def summarize_chunk(text, api_url, api_key, model, target_lang='ko'):
     # Process System Prompt
     system_prompt = template.get("system_prompt", DEFAULT_SUMMARY_TEMPLATE["system_prompt"])
     
-    # Replace language placeholder if present, or "Korean" for backward compatibility if using default-ish prompt
-    # We'll allow {target_lang} in the template.
-    system_prompt = system_prompt.replace("Korean", target_name).replace("한글", target_name)
+    # Replace {target_lang} placeholder with the actual target language name
     system_prompt = system_prompt.replace("{target_lang}", target_name)
     
     # Process User Prompt
