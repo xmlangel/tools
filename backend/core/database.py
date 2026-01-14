@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 import datetime
+from datetime import timezone
 
 # Database URL from environment variable
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@postgres:5432/youtube_stt_db")
@@ -23,8 +24,10 @@ class Job(Base):
     output_files = Column(Text)  # JSON string or comma-separated list of MinIO paths
     model_name = Column(String, nullable=True)
     youtube_url = Column(Text, nullable=True)  # Store original YouTube URL for both STT and Translation
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    source_type = Column(String, default="youtube")  # 'youtube' or 'upload'
+    original_filename = Column(String, nullable=True)  # Original filename for uploaded files
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(timezone.utc), onupdate=lambda: datetime.datetime.now(timezone.utc))
     error_message = Column(Text, nullable=True)
 
 class Settings(Base):
@@ -33,7 +36,7 @@ class Settings(Base):
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String, unique=True, index=True)
     value = Column(Text)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(timezone.utc), onupdate=lambda: datetime.datetime.now(timezone.utc))
 
 class LLMConfig(Base):
     __tablename__ = "llm_configs"
@@ -44,8 +47,8 @@ class LLMConfig(Base):
     api_key = Column(String)
     model = Column(String)
     is_default = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.datetime.now(timezone.utc), onupdate=lambda: datetime.datetime.now(timezone.utc))
 
 # Import User model so it is registered with Base
 from models.user import User

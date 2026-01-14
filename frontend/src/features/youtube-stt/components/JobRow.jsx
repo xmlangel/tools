@@ -45,6 +45,28 @@ const JobRow = ({ job, onCompleted }) => {
         return null;
     };
 
+    // Format date to Korean timezone (UTC+9)
+    const formatKoreanTime = (dateString) => {
+        if (!dateString) return '-';
+
+        const date = new Date(dateString);
+
+        // Check if date is valid
+        if (isNaN(date.getTime())) return '-';
+
+        // Format as Korean timezone
+        return date.toLocaleString('ko-KR', {
+            timeZone: 'Asia/Seoul',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+    };
+
     const handleViewText = async (filename, key) => {
         try {
             const response = await axios.get(`${API_URL}/api/view/${filename}`);
@@ -114,7 +136,7 @@ const JobRow = ({ job, onCompleted }) => {
                         {data.error_message && <div className="error-text">{data.error_message}</div>}
                     </div>
                 </td>
-                <td>{data.created_at ? new Date(data.created_at).toLocaleString() : '-'}</td>
+                <td>{formatKoreanTime(data.created_at)}</td>
                 <td>
                     <div className="action-buttons">
                         {data.youtube_url && (

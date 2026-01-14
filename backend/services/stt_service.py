@@ -259,3 +259,140 @@ def process_stt_job(job_id: int, youtube_url: str, model_size: str):
         logger.error(f"Job {job_id} failed: {e}", exc_info=True)
     finally:
         db.close()
+
+def process_uploaded_file_job(job_id: int, audio_file_path: str, model_size: str):
+    """Process STT job for uploaded audio file."""
+    logger.info(f"Starting STT job {job_id} for uploaded file: {audio_file_path} with model: {model_size}")
+    db: Session = SessionLocal()
+    job = db.query(Job).filter(Job.id == job_id).first()
+    if not job:
+        logger.error(f"Job {job_id} not found")
+        return
+
+    try:
+        job.status = "processing"
+        job.progress = 10
+        db.commit()
+
+        # Get original filename without extension for naming
+        original_filename = job.original_filename or "uploaded_audio"
+        base_filename = os.path.splitext(original_filename)[0]
+        safe_filename = "".join(c for c in base_filename if c.isalnum() or c in (' ', '-', '_')).strip()
+        safe_filename = safe_filename.replace(' ', '_')
+        base_filename = f"{job_id}_{safe_filename}"
+        
+        # Upload original audio file to MinIO
+        file_ext = os.path.splitext(audio_file_path)[1]
+        audio_object_name = f"{base_filename}{file_ext}"
+        logger.info(f"Job {job_id}: Uploading audio to MinIO as {audio_object_name}...")
+        upload_file(audio_file_path, audio_object_name)
+        
+        job.progress = 30
+        db.commit()
+
+        # Check for cancellation
+        db.refresh(job)
+        if job.status == "cancelled":
+            logger.info(f"Job {job_id}: Cancelled by user")
+            if os.path.exists(audio_file_path):
+                os.remove(audio_file_path)
+            return
+
+        # Transcribe with Whisper
+        logger.info(f"Job {job_id}: Loading Whisper model ({model_size})...")
+        model = whisper.load_model(model_size)
+        job.progress = 50
+        db.commit()
+        
+        logger.info(f"Job {job_id}: Transcribing audio...")
+        result = model.transcribe(audio_file_path)
+        text = result["text"].strip()
+        
+        logger.info(f"Job {job_id}: Transcription complete. Length: {len(text)} chars")
+        
+        job.progress = 80
+        db.commit()
+
+        # Upload Text to MinIO
+        text_object_name = f"{base_filename}.txt"
+        logger.info(f"Job {job_id}: Uploading text to MinIO as {text_object_name}...")
+        upload_stream(text.encode('utf-8'), text_object_name, "text/plain")
+        
+        # Generate Summary
+        logger.info(f"Job {job_id}: Generating summary...")
+        summary_text = generate_summary(text)
+        summary_object_name = f"{base_filename}_summary.txt"
+        
+        logger.info(f"Job {job_id}: Uploading summary to MinIO as {summary_object_name}...")
+        upload_stream(summary_text.encode('utf-8'), summary_object_name, "text/plain")
+
+        # Generate Korean Translation
+        translation_object_name = None
+        try:
+            logger.info(f"Job {job_id}: Generating Korean translation...")
+            
+            # Get default LLM config
+            llm_config = db.query(LLMConfig).filter(LLMConfig.is_default == True).first()
+            if not llm_config:
+                llm_config = db.query(LLMConfig).first()
+            
+            if llm_config:
+                chunks = split_text(text)
+                logger.info(f"Job {job_id}: Split text into {len(chunks)} chunks for translation")
+                
+                translated_parts = []
+                for i, chunk in enumerate(chunks):
+                    logger.info(f"Job {job_id}: Translating chunk {i+1}/{len(chunks)}...")
+                    translated = translate_chunk(
+                        chunk,
+                        llm_config.openwebui_url,
+                        llm_config.api_key,
+                        llm_config.model,
+                        target_lang='ko'
+                    )
+                    translated_parts.append(translated)
+                
+                final_translation = "\n\n".join(translated_parts)
+                
+                translation_object_name = f"{base_filename}_translation.txt"
+                logger.info(f"Job {job_id}: Uploading translation to MinIO as {translation_object_name}...")
+                upload_stream(final_translation.encode('utf-8'), translation_object_name, "text/plain")
+                logger.info(f"Job {job_id}: Translation completed successfully")
+            else:
+                logger.warning(f"Job {job_id}: No LLM configuration found. Skipping translation.")
+        except Exception as e:
+            logger.error(f"Job {job_id}: Translation failed: {e}", exc_info=True)
+
+        # Cleanup local file
+        if os.path.exists(audio_file_path):
+            os.remove(audio_file_path)
+            logger.info(f"Job {job_id}: Cleaned up local file {audio_file_path}")
+
+        # Update Job
+        job.status = "completed"
+        job.progress = 100
+        
+        output_data = {
+            "audio": audio_object_name, 
+            "text": text_object_name,
+            "summary": summary_object_name
+        }
+        
+        if translation_object_name:
+            output_data["translation"] = translation_object_name
+        
+        job.output_files = json.dumps(output_data)
+        db.commit()
+        logger.info(f"Job {job_id}: Completed successfully")
+
+    except Exception as e:
+        job.status = "failed"
+        job.error_message = str(e)
+        db.commit()
+        logger.error(f"Job {job_id} failed: {e}", exc_info=True)
+        # Cleanup on failure
+        if os.path.exists(audio_file_path):
+            os.remove(audio_file_path)
+    finally:
+        db.close()
+
