@@ -9,7 +9,8 @@ router = APIRouter()
 
 class LLMConfigBase(BaseModel):
     name: str
-    openwebui_url: str
+    provider: str  # 'openwebui' or 'ollama'
+    api_url: str
     api_key: str
     model: str
     is_default: bool = False
@@ -19,7 +20,8 @@ class LLMConfigCreate(LLMConfigBase):
 
 class LLMConfigUpdate(BaseModel):
     name: Optional[str] = None
-    openwebui_url: Optional[str] = None
+    provider: Optional[str] = None
+    api_url: Optional[str] = None
     api_key: Optional[str] = None
     model: Optional[str] = None
     is_default: Optional[bool] = None

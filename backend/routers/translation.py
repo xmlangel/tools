@@ -12,7 +12,8 @@ router = APIRouter()
 class TranslationRequest(BaseModel):
     input_file: str
     target_lang: str
-    openwebui_url: str
+    provider: str
+    api_url: str
     api_key: str
     model: str
     youtube_url: Optional[str] = None  # Optional YouTube URL from original STT job
@@ -41,7 +42,8 @@ async def start_translation_job(request: TranslationRequest, background_tasks: B
         process_translation_job, 
         job.id, 
         file_content, 
-        request.openwebui_url, 
+        request.provider,
+        request.api_url, 
         request.api_key, 
         request.model,
         request.input_file,
@@ -80,7 +82,8 @@ async def update_template(request: TemplateRequest):
 class SimpleTranslationRequest(BaseModel):
     text: str
     target_lang: str
-    openwebui_url: str
+    provider: str
+    api_url: str
     api_key: str
     model: str
     system_prompt: str = None
@@ -99,7 +102,8 @@ async def simple_translation(request: SimpleTranslationRequest):
         # So we'll do it synchronously. This might timeout for very large texts.
         translated = translate_chunk(
             chunk, 
-            request.openwebui_url, 
+            request.provider,
+            request.api_url, 
             request.api_key, 
             request.model, 
             request.target_lang,

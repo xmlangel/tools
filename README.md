@@ -1,6 +1,12 @@
 # YouTube STT & Translation Tools 문서
 
-이 프로젝트는 YouTube 동영상의 음성을 텍스트로 변환(STT)하고 번역하는 기능을 제공하는 포괄적인 도구 모음입니다.
+이 프로젝트는 여러 툴들을 모아놓은 Tools 를 모아놓은 도구 사이트입니다.
+1. YouTube 동영상의 음성을 텍스트로 변환(STT)하고 번역하는 기능
+2. 릴리즈 노트 변환기
+3. JSON Viewer
+4. Text Counter 
+
+
 
 ## 📚 문서 목차
 

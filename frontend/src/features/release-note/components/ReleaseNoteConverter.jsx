@@ -34,7 +34,8 @@ const ReleaseNoteConverter = () => {
         try {
             const response = await axios.post(`${API_URL}/api/release-note/convert`, {
                 input_text: inputText,
-                openwebui_url: selectedConfig.openwebui_url,
+                provider: selectedConfig.provider,
+                api_url: selectedConfig.api_url,
                 api_key: selectedConfig.api_key,
                 model: selectedConfig.model
             });

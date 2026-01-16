@@ -6,7 +6,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
     const [editingId, setEditingId] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
-        openwebui_url: '',
+        provider: 'openwebui',
+        api_url: '',
         api_key: '',
         model: '',
         is_default: false
@@ -23,7 +24,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
         setEditingId(null);
         setFormData({
             name: '',
-            openwebui_url: '',
+            provider: 'openwebui',
+            api_url: '',
             api_key: '',
             model: '',
             is_default: false
@@ -35,7 +37,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
         setEditingId(config.id);
         setFormData({
             name: config.name,
-            openwebui_url: config.openwebui_url,
+            provider: config.provider || 'openwebui',
+            api_url: config.api_url,
             api_key: config.api_key,
             model: config.model,
             is_default: config.is_default || false
@@ -119,24 +122,36 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                             />
                         </div>
                         <div className="form-group">
-                            <label>OpenWebUI URL</label>
+                            <label>Provider</label>
+                            <select
+                                value={formData.provider}
+                                onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
+                                required
+                                style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
+                            >
+                                <option value="openwebui">OpenWebUI</option>
+                                <option value="ollama">Ollama</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label>API URL</label>
                             <input
                                 type="text"
-                                value={formData.openwebui_url}
-                                onChange={(e) => setFormData({ ...formData, openwebui_url: e.target.value })}
-                                placeholder="http://localhost:3000"
+                                value={formData.api_url}
+                                onChange={(e) => setFormData({ ...formData, api_url: e.target.value })}
+                                placeholder={formData.provider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:3000'}
                                 required
                                 style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
                             />
                         </div>
                         <div className="form-group">
-                            <label>API Key</label>
+                            <label>API Key {formData.provider === 'ollama' && '(Optional)'}</label>
                             <input
                                 type="password"
                                 value={formData.api_key}
                                 onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
-                                placeholder="sk-..."
-                                required
+                                placeholder={formData.provider === 'ollama' ? 'Optional for Ollama' : 'sk-...'}
+                                required={formData.provider !== 'ollama'}
                                 style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
                             />
                         </div>
@@ -146,7 +161,7 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                 type="text"
                                 value={formData.model}
                                 onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                                placeholder="gpt-4"
+                                placeholder={formData.provider === 'ollama' ? 'llama2' : 'gpt-4'}
                                 required
                                 style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', backgroundColor: '#2a2a2a', border: '1px solid #555', color: 'white' }}
                             />
@@ -204,7 +219,17 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                             }}>Default</span>
                                         )}
                                         <div style={{ fontSize: '0.85rem', color: '#aaa' }}>
-                                            {config.model} @ {config.openwebui_url}
+                                            <span style={{
+                                                backgroundColor: config.provider === 'ollama' ? '#5865F2' : '#10a37f',
+                                                color: 'white',
+                                                padding: '0.1rem 0.4rem',
+                                                borderRadius: '3px',
+                                                fontSize: '0.7rem',
+                                                marginRight: '0.5rem'
+                                            }}>
+                                                {config.provider === 'ollama' ? 'Ollama' : 'OpenWebUI'}
+                                            </span>
+                                            {config.model} @ {config.api_url}
                                         </div>
                                     </div>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>

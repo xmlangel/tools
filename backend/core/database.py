@@ -43,7 +43,8 @@ class LLMConfig(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)  # Profile name (e.g., "My GPT-4")
-    openwebui_url = Column(String)
+    provider = Column(String, default="openwebui")  # 'openwebui' or 'ollama'
+    api_url = Column(String)  # API endpoint URL (previously openwebui_url)
     api_key = Column(String)
     model = Column(String)
     is_default = Column(Boolean, default=False)

@@ -110,7 +110,8 @@ const TranslationForm = ({ onJobCreated }) => {
             const response = await axios.post(`${API_URL}/api/translate`, {
                 input_file: inputFile,
                 target_lang: targetLang,
-                openwebui_url: selectedConfig.openwebui_url,
+                provider: selectedConfig.provider,
+                api_url: selectedConfig.api_url,
                 api_key: selectedConfig.api_key,
                 model: selectedConfig.model,
                 youtube_url: youtubeUrl  // Send YouTube URL if found

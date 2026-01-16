@@ -46,7 +46,7 @@ def save_template(template_data):
         logger.error(f"Failed to save template: {e}")
         return False
 
-def convert_release_note(input_text, api_url, api_key, model):
+def convert_release_note(input_text, provider, api_url, api_key, model):
     template = get_template()
     system_prompt = template.get("system_prompt", DEFAULT_TEMPLATE["system_prompt"])
     user_prompt_template = template.get("user_prompt_template", DEFAULT_TEMPLATE["user_prompt_template"])
@@ -54,7 +54,7 @@ def convert_release_note(input_text, api_url, api_key, model):
     user_prompt = user_prompt_template.replace("{input_text}", input_text)
     
     try:
-        return send_llm_request(api_url, api_key, model, system_prompt, user_prompt, temperature=0.7)
+        return send_llm_request(provider, api_url, api_key, model, system_prompt, user_prompt, temperature=0.7)
     except Exception as e:
         logger.error(f"Release note conversion failed: {e}")
         raise e

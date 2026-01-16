@@ -61,7 +61,8 @@ const SimpleTranslationForm = () => {
             const response = await axios.post(`${API_URL}/api/translate/simple`, {
                 text: inputText,
                 target_lang: targetLang,
-                openwebui_url: selectedConfig.openwebui_url,
+                provider: selectedConfig.provider,
+                api_url: selectedConfig.api_url,
                 api_key: selectedConfig.api_key,
                 model: selectedConfig.model,
                 system_prompt: systemPrompt

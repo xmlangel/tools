@@ -6,7 +6,8 @@ router = APIRouter()
 
 class ConvertRequest(BaseModel):
     input_text: str
-    openwebui_url: str
+    provider: str
+    api_url: str
     api_key: str
     model: str
 
@@ -19,7 +20,8 @@ async def convert(request: ConvertRequest):
     try:
         result = convert_release_note(
             request.input_text,
-            request.openwebui_url,
+            request.provider,
+            request.api_url,
             request.api_key,
             request.model
         )

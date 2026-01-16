@@ -34,7 +34,8 @@ def generate_summary(text):
         
         # 4. Call LLM
         summary = send_llm_request(
-            llm_config.openwebui_url,
+            llm_config.provider,
+            llm_config.api_url,
             llm_config.api_key,
             llm_config.model,
             system_prompt,

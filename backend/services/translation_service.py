@@ -29,7 +29,7 @@ def split_text(text, chunk_size=2000):
         chunks.append(current_chunk)
     return chunks
 
-def translate_chunk(text, api_url, api_key, model, target_lang='ko', system_prompt_override=None):
+def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', system_prompt_override=None):
     template = get_template()
     
     # Map target_lang code to name
@@ -67,12 +67,12 @@ def translate_chunk(text, api_url, api_key, model, target_lang='ko', system_prom
     logger.info(f"User Prompt (first 1000 chars): {user_prompt[:1000]}...")
     
     try:
-        return send_llm_request(api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
+        return send_llm_request(provider, api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
     except Exception as e:
         logger.error(f"Translation error: {e}")
         return f"[Translation Failed] {text}"
 
-def summarize_chunk(text, api_url, api_key, model, target_lang='ko'):
+def summarize_chunk(text, provider, api_url, api_key, model, target_lang='ko'):
     # Get the global summary template
     template = get_summary_template()
     
@@ -99,12 +99,12 @@ def summarize_chunk(text, api_url, api_key, model, target_lang='ko'):
     user_prompt = user_prompt_template.replace("{text}", text)
     
     try:
-        return send_llm_request(api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
+        return send_llm_request(provider, api_url, api_key, model, system_prompt, user_prompt, temperature=0.3)
     except Exception as e:
         logger.error(f"Summary error: {e}")
         return f"[Summary Failed] {text[:50]}..."
 
-def process_translation_job(job_id: int, text_content: str, api_url: str, api_key: str, model: str, original_filename: str, target_lang: str = 'ko'):
+def process_translation_job(job_id: int, text_content: str, provider: str, api_url: str, api_key: str, model: str, original_filename: str, target_lang: str = 'ko'):
     logger.info(f"Starting Translation job {job_id} with model {model} for file {original_filename} to {target_lang}")
     db: Session = SessionLocal()
     job = db.query(Job).filter(Job.id == job_id).first()
@@ -131,12 +131,12 @@ def process_translation_job(job_id: int, text_content: str, api_url: str, api_ke
                 return
 
             logger.info(f"Job {job_id}: Translating chunk {i+1}/{total_chunks} ({len(chunk)} chars)...")
-            translated = translate_chunk(chunk, api_url, api_key, model, target_lang)
+            translated = translate_chunk(chunk, provider, api_url, api_key, model, target_lang)
             translated_parts.append(translated)
 
             # Generate summary for the chunk
             logger.info(f"Job {job_id}: Summarizing chunk {i+1}/{total_chunks}...")
-            summary_chunk_text = summarize_chunk(chunk, api_url, api_key, model, target_lang)
+            summary_chunk_text = summarize_chunk(chunk, provider, api_url, api_key, model, target_lang)
             summary_parts.append(summary_chunk_text)
             
             # 진행률 업데이트 (10% ~ 90%)
