@@ -23,7 +23,7 @@ const PRESETS = {
     }
 };
 
-const SimpleTranslationForm = () => {
+const SimpleTranslationForm = ({ onJobCreated }) => {
     const [mode, setMode] = useState(MODES.TEXT);
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
@@ -69,6 +69,11 @@ const SimpleTranslationForm = () => {
                     system_prompt: PRESETS.default.prompt
                 });
                 setOutputText(response.data.translated_text);
+
+                // Trigger Recent Jobs update
+                if (response.data.job && onJobCreated) {
+                    onJobCreated(response.data.job);
+                }
             } catch (err) {
                 console.error('Translation failed:', err);
             } finally {
@@ -106,6 +111,11 @@ const SimpleTranslationForm = () => {
             setOutputText(response.data.translated_text);
             // Show extracted original text too
             setInputText(response.data.original_text);
+
+            // Trigger Recent Jobs update
+            if (response.data.job && onJobCreated) {
+                onJobCreated(response.data.job);
+            }
         } catch (err) {
             console.error('File translation failed:', err);
             let errorMessage = '파일 번역에 실패했습니다';

@@ -169,7 +169,7 @@ function YoutubeSTTApp() {
                         <TranslationForm onJobCreated={addJob} />
 
                     ) : activeTab === 'simple-translate' ? (
-                        <SimpleTranslationForm />
+                        <SimpleTranslationForm onJobCreated={addJob} />
                     ) : (
                         <SummaryTemplateForm />
                     )}

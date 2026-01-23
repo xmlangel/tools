@@ -10,6 +10,14 @@ from services.summary_template_service import get_template as get_summary_templa
 
 logger = setup_logger("translation_service")
 
+LANG_NAMES_KO = {
+    'ko': '한국어',
+    'en': '영어',
+    'ja': '일본어',
+    'zh': '중국어',
+    'auto': '자동감지'
+}
+
 def split_text(text, chunk_size=2000):
     chunks = []
     current_chunk = ""
@@ -183,24 +191,35 @@ def process_translation_job(job_id: int, text_content: str, provider: str, api_u
         final_translation = "\n\n".join(translated_parts)
         final_summary = "\n\n".join(summary_parts)
         
+        # Consolidate input and output as requested by user with dynamic header
+        src_name = LANG_NAMES_KO.get(src_lang, src_lang)
+        tgt_name = LANG_NAMES_KO.get(target_lang, target_lang)
+        header = f"# 텍스트입력, {src_name}, {tgt_name}"
+        
+        consolidated_content = f"{header}\n{text_content}\n\n#번역결과\n{final_translation}"
+
         # Upload to MinIO
         # Generate output filename: original_filename_translation.txt
         name_without_ext = original_filename.rsplit('.', 1)[0]
         output_filename = f"{name_without_ext}_translation.txt"
         summary_filename = f"{name_without_ext}_summary.txt"
         
-        logger.info(f"Job {job_id}: Uploading result to MinIO as {output_filename}")
-        upload_stream(final_translation.encode('utf-8'), output_filename, "text/plain")
+        logger.info(f"Job {job_id}: Uploading consolidated result to MinIO as {output_filename}")
+        upload_stream(consolidated_content.encode('utf-8'), output_filename, "text/plain")
 
-        logger.info(f"Job {job_id}: Uploading summary to MinIO as {summary_filename}")
-        upload_stream(final_summary.encode('utf-8'), summary_filename, "text/plain")
+        if summary_parts:
+            logger.info(f"Job {job_id}: Uploading summary to MinIO as {summary_filename}")
+            upload_stream(final_summary.encode('utf-8'), summary_filename, "text/plain")
         
         job.status = "completed"
         job.progress = 100
-        job.output_files = json.dumps({
-            "translated_text": output_filename,
-            "summary": summary_filename
-        })
+        output_data = {
+            "translated_text": output_filename
+        }
+        if summary_parts:
+            output_data["summary"] = summary_filename
+            
+        job.output_files = json.dumps(output_data)
         db.commit()
         logger.info(f"Job {job_id}: Completed successfully")
 

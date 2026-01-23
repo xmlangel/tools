@@ -4,12 +4,22 @@ import json
 from sqlalchemy.orm import Session
 from typing import Optional
 from core.database import get_db, Job
-from core.storage import get_file_content
+from core.storage import get_file_content, upload_stream
 from services.translation_service import process_translation_job, translate_chunk, split_text
 from services.translation_template_service import get_template, save_template
 from services.translation_file_service import extract_text_from_file
+import uuid
+import datetime
 
 router = APIRouter()
+
+LANG_NAMES_KO = {
+    'ko': '한국어',
+    'en': '영어',
+    'ja': '일본어',
+    'zh': '중국어',
+    'auto': '자동감지'
+}
 
 class TranslationRequest(BaseModel):
     input_file: str
@@ -92,7 +102,7 @@ class SimpleTranslationRequest(BaseModel):
     system_prompt: str = None
 
 @router.post("/translate/simple")
-async def simple_translation(request: SimpleTranslationRequest):
+async def simple_translation(request: SimpleTranslationRequest, db: Session = Depends(get_db)):
     
     # Split text if it's too long, though for "simple" we might just process it.
     # But to be safe and consistent, let's split and join.
@@ -115,7 +125,53 @@ async def simple_translation(request: SimpleTranslationRequest):
         translated_parts.append(translated)
     
     final_translation = "\n\n".join(translated_parts)
-    return {"translated_text": final_translation}
+
+    # 1. Store in MinIO as a job
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    uid = str(uuid.uuid4())[:8]
+    input_filename = f"simple_in_{timestamp}_{uid}.txt"
+    output_filename = f"simple_out_{timestamp}_{uid}.txt"
+
+    # Consolidate input and output as requested by user with dynamic header
+    src_name = LANG_NAMES_KO.get(request.src_lang, request.src_lang)
+    tgt_name = LANG_NAMES_KO.get(request.target_lang, request.target_lang)
+    header = f"# 텍스트입력, {src_name}, {tgt_name}"
+    
+    consolidated_content = f"{header}\n{request.text}\n\n#번역결과\n{final_translation}"
+
+    upload_stream(request.text.encode('utf-8'), input_filename, "text/plain")
+    upload_stream(consolidated_content.encode('utf-8'), output_filename, "text/plain")
+
+    # 2. Create Job Record
+    job = Job(
+        type="translate",
+        status="completed",
+        progress=100,
+        input_data=input_filename,
+        output_files=json.dumps({
+            "translated_text": output_filename
+        }),
+        model_name=request.model,
+        source_type="text",
+        original_filename="Simple Translation Tab"
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+
+    return {
+        "translated_text": final_translation,
+        "job": {
+            "id": job.id,
+            "type": job.type,
+            "status": job.status,
+            "progress": job.progress,
+            "input": job.input_data,
+            "output": json.loads(job.output_files),
+            "created_at": job.created_at,
+            "error": job.error_message
+        }
+    }
 
 @router.post("/translate/file")
 async def translate_file(
@@ -126,7 +182,8 @@ async def translate_file(
     api_url: str = Form(...),
     api_key: Optional[str] = Form(None),
     model: str = Form(...),
-    system_prompt: Optional[str] = Form(None)
+    system_prompt: Optional[str] = Form(None),
+    db: Session = Depends(get_db)
 ):
     try:
         content = await file.read()
@@ -157,10 +214,57 @@ async def translate_file(
         
         final_translation = "\n\n".join(translated_parts)
         
+        # 1. Store in MinIO
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        uid = str(uuid.uuid4())[:8]
+        # Use original filename but add prefix/timestamp to avoid collisions
+        safe_name = filename.replace(' ', '_')
+        input_object = f"upload_{timestamp}_{uid}_{safe_name}"
+        output_object = f"translated_{timestamp}_{uid}_{safe_name}"
+        if not output_object.endswith('.txt'):
+            output_object += '.txt'
+
+        # Consolidate input and output as requested by user with dynamic header
+        src_name = LANG_NAMES_KO.get(src_lang, src_lang)
+        tgt_name = LANG_NAMES_KO.get(target_lang, target_lang)
+        header = f"# 텍스트입력, {src_name}, {tgt_name}"
+        
+        consolidated_content = f"{header}\n{text}\n\n#번역결과\n{final_translation}"
+
+        upload_stream(text.encode('utf-8'), input_object, "text/plain")
+        upload_stream(consolidated_content.encode('utf-8'), output_object, "text/plain")
+
+        # 2. Create Job record
+        job = Job(
+            type="translate",
+            status="completed",
+            progress=100,
+            input_data=input_object,
+            output_files=json.dumps({
+                "translated_text": output_object
+            }),
+            model_name=model,
+            source_type="upload",
+            original_filename=filename
+        )
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+
         return {
             "original_text": text,
             "translated_text": final_translation,
-            "filename": filename
+            "filename": filename,
+            "job": {
+                "id": job.id,
+                "type": job.type,
+                "status": job.status,
+                "progress": job.progress,
+                "input": job.input_data,
+                "output": json.loads(job.output_files),
+                "created_at": job.created_at,
+                "error": job.error_message
+            }
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
