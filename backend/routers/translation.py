@@ -127,7 +127,7 @@ async def translate_file(
     api_url: str = Form(...),
     api_key: str = Form(...),
     model: str = Form(...),
-    system_prompt: str = Form(None)
+    system_prompt: Optional[str] = Form(None)
 ):
     from services.translation_file_service import extract_text_from_file
     from services.translation_service import translate_chunk, split_text

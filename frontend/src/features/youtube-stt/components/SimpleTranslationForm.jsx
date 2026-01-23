@@ -111,7 +111,23 @@ const SimpleTranslationForm = () => {
             setInputText(response.data.original_text);
         } catch (err) {
             console.error('File translation failed:', err);
-            alert('파일 번역에 실패했습니다: ' + (err.response?.data?.detail || err.message));
+            let errorMessage = '파일 번역에 실패했습니다';
+
+            if (err.response?.data?.detail) {
+                const detail = err.response.data.detail;
+                if (typeof detail === 'string') {
+                    errorMessage += `: ${detail}`;
+                } else if (Array.isArray(detail)) {
+                    // FastAPI validation errors
+                    const msg = detail.map(d => `${d.loc.join('.')}: ${d.msg}`).join(', ');
+                    errorMessage += `: ${msg}`;
+                } else {
+                    errorMessage += `: ${JSON.stringify(detail)}`;
+                }
+            } else {
+                errorMessage += `: ${err.message}`;
+            }
+            alert(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -324,7 +340,7 @@ const langBtnStyle = {
 const textAreaStyle = {
     width: '100%', height: '100%', background: 'none', border: 'none',
     color: 'white', resize: 'none', fontSize: '1.2rem', lineHeight: '1.5',
-    outline: 'none', overflowY: 'auto'
+    outline: 'none', overflowY: 'auto', textAlign: 'left'
 };
 
 const uploadBoxStyle = {
@@ -353,7 +369,7 @@ const fullScreenHeaderStyle = {
 const fullScreenContentStyle = {
     flex: 1, overflowY: 'auto', fontSize: '1.25rem', lineHeight: '1.8',
     color: '#eee', padding: '1.5rem', backgroundColor: '#1a1a1a',
-    borderRadius: '8px', whiteSpace: 'pre-wrap', border: '1px solid #333'
+    borderRadius: '8px', whiteSpace: 'pre-wrap', border: '1px solid #333', textAlign: 'left'
 };
 
 const primaryBtnStyle = {

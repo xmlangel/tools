@@ -1,6 +1,9 @@
 import os
-from PyPDF2 import PdfReader
 import io
+import logging
+from PyPDF2 import PdfReader
+
+logger = logging.getLogger(__name__)
 
 def extract_text_from_file(file_content: bytes, filename: str) -> str:
     """
