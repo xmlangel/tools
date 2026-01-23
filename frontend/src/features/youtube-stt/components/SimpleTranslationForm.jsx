@@ -28,7 +28,7 @@ const SimpleTranslationForm = () => {
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [srcLang, setSrcLang] = useState('auto');
-    const [targetLang, setTargetLang] = useState('ko');
+    const [targetLang, setTargetLang] = useState('auto');
     const [loading, setLoading] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '' });
@@ -184,7 +184,7 @@ const SimpleTranslationForm = () => {
                 <div style={{ flex: 1, borderRight: '1px solid #333', display: 'flex', flexDirection: 'column' }}>
                     {/* Source Lang Bar */}
                     <div style={langBarStyle}>
-                        {LANGUAGES.slice(0, 4).map(lang => (
+                        {LANGUAGES.slice(0, 5).map(lang => (
                             <button
                                 key={lang.code}
                                 onClick={() => setSrcLang(lang.code)}
