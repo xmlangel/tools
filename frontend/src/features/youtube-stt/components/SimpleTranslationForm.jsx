@@ -10,7 +10,7 @@ const MODES = {
 };
 
 const LANGUAGES = [
-    { code: 'auto', name: '자동 감지', srcOnly: true },
+    { code: 'auto', nameSrc: '자동 감지', nameTgt: '자동 (En↔Ko)' },
     { code: 'ko', name: '한국어' },
     { code: 'en', name: '영어' },
     { code: 'ja', name: '일본어' },
@@ -183,7 +183,7 @@ const SimpleTranslationForm = () => {
                                 onClick={() => setSrcLang(lang.code)}
                                 style={{ ...langBtnStyle, color: srcLang === lang.code ? 'var(--primary-color)' : '#eee' }}
                             >
-                                {lang.name}
+                                {lang.nameSrc || lang.name}
                             </button>
                         ))}
                     </div>
@@ -234,13 +234,13 @@ const SimpleTranslationForm = () => {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#2b2d31' }}>
                     {/* Target Lang Bar */}
                     <div style={langBarStyle}>
-                        {LANGUAGES.filter(l => !l.srcOnly).slice(0, 4).map(lang => (
+                        {LANGUAGES.slice(0, 5).map(lang => (
                             <button
                                 key={lang.code}
                                 onClick={() => setTargetLang(lang.code)}
                                 style={{ ...langBtnStyle, color: targetLang === lang.code ? 'var(--primary-color)' : '#eee' }}
                             >
-                                {lang.name}
+                                {lang.nameTgt || lang.name}
                             </button>
                         ))}
                     </div>
