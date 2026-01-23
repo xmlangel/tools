@@ -32,17 +32,18 @@ def split_text(text, chunk_size=2000):
 def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', src_lang='en', system_prompt_override=None):
     template = get_template()
     
-    # Map target_lang code to name
+    # Map language codes to names/display codes
     lang_map = {
         'ko': ('Korean', 'ko'),
         'en': ('English', 'en'),
         'ja': ('Japanese', 'ja'),
         'zh': ('Chinese', 'zh'),
-        'auto': ('Korean or English', 'auto')
+        'auto': ('Detect Automatically', 'auto')
     }
     
     target_name, target_code = lang_map.get(target_lang, ('Korean', 'ko'))
-    source_name, source_code = lang_map.get(src_lang, ('English', 'en'))
+    source_info = lang_map.get(src_lang, ('English', 'en'))
+    source_name, source_code = source_info
 
     if system_prompt_override:
         system_prompt = system_prompt_override
@@ -52,8 +53,15 @@ def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', s
     # Handle placeholders in system prompt
     system_prompt = system_prompt.replace("{target_lang}", target_name)
     system_prompt = system_prompt.replace("{tgt_lang_code}", target_code)
-    system_prompt = system_prompt.replace("{source_lang}", source_name)
-    system_prompt = system_prompt.replace("{src_lang_code}", source_code)
+    
+    if src_lang == 'auto':
+        system_prompt = system_prompt.replace("{source_lang}", "the original")
+        system_prompt = system_prompt.replace("{src_lang_code}", "auto-detected")
+        # Add explicit auto-detection instruction
+        system_prompt += " The source language should be automatically detected from the input text."
+    else:
+        system_prompt = system_prompt.replace("{source_lang}", source_name)
+        system_prompt = system_prompt.replace("{src_lang_code}", source_code)
     
     # Add auto-detection instruction if target is auto
     if target_lang == 'auto':
@@ -65,8 +73,13 @@ def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', s
     # Handle placeholders in user prompt
     user_prompt_template = user_prompt_template.replace("{target_lang}", target_name)
     user_prompt_template = user_prompt_template.replace("{tgt_lang_code}", target_code)
-    user_prompt_template = user_prompt_template.replace("{source_lang}", source_name)
-    user_prompt_template = user_prompt_template.replace("{src_lang_code}", source_code)
+    
+    if src_lang == 'auto':
+        user_prompt_template = user_prompt_template.replace("{source_lang}", "detected language")
+        user_prompt_template = user_prompt_template.replace("{src_lang_code}", "auto")
+    else:
+        user_prompt_template = user_prompt_template.replace("{source_lang}", source_name)
+        user_prompt_template = user_prompt_template.replace("{src_lang_code}", source_code)
     
     user_prompt = user_prompt_template.replace("{text}", text)
     

@@ -7,7 +7,7 @@ import { API_URL } from '../../../config';
 const TranslationForm = ({ onJobCreated }) => {
     const [inputFile, setInputFile] = useState('');
     const [targetLang, setTargetLang] = useState('ko');
-    const [srcLang, setSrcLang] = useState('en');
+    const [srcLang, setSrcLang] = useState('auto');
     const [loading, setLoading] = useState(false);
     const [files, setFiles] = useState([]);
     const [sttJobs, setSttJobs] = useState([]);  // Store STT jobs to get YouTube URLs
@@ -307,10 +307,11 @@ const TranslationForm = ({ onJobCreated }) => {
                     <div className="form-group" style={{ flex: 1 }}>
                         <label>Source Language</label>
                         <select value={srcLang} onChange={(e) => setSrcLang(e.target.value)}>
-                            <option value="en">English</option>
-                            <option value="ko">Korean</option>
-                            <option value="ja">Japanese</option>
-                            <option value="zh">Chinese</option>
+                            <option value="auto">자동 감지 (Auto Detect)</option>
+                            <option value="en">영어</option>
+                            <option value="ko">한국어</option>
+                            <option value="ja">일본어</option>
+                            <option value="zh">중국어</option>
                         </select>
                     </div>
 

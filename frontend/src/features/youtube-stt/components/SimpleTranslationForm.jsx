@@ -22,7 +22,7 @@ const SimpleTranslationForm = () => {
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [targetLang, setTargetLang] = useState('auto');
-    const [srcLang, setSrcLang] = useState('en');
+    const [srcLang, setSrcLang] = useState('auto');
     const [systemPrompt, setSystemPrompt] = useState(PRESETS.default.prompt);
     const [loading, setLoading] = useState(false);
     const [isPromptExpanded, setIsPromptExpanded] = useState(false);
@@ -47,35 +47,44 @@ const SimpleTranslationForm = () => {
         }
     };
 
-    const handleTranslate = async (e) => {
-        e.preventDefault();
-        if (!inputText.trim()) return;
-
-        const selectedConfig = getSelectedConfig();
-        if (!selectedConfig) {
-            alert('Please select an LLM configuration first.');
+    // Auto-translation logic with debounce
+    useEffect(() => {
+        if (!inputText.trim()) {
+            setOutputText('');
             return;
         }
 
-        setLoading(true);
-        try {
-            const response = await axios.post(`${API_URL}/api/translate/simple`, {
-                text: inputText,
-                target_lang: targetLang,
-                src_lang: srcLang,
-                provider: selectedConfig.provider,
-                api_url: selectedConfig.api_url,
-                api_key: selectedConfig.api_key,
-                model: selectedConfig.model,
-                system_prompt: systemPrompt
-            });
-            setOutputText(response.data.translated_text);
-        } catch (err) {
-            console.error('Translation failed:', err);
-            alert('Translation failed: ' + (err.response?.data?.detail || err.message));
-        } finally {
-            setLoading(false);
-        }
+        const selectedConfig = getSelectedConfig();
+        if (!selectedConfig) return;
+
+        const timer = setTimeout(async () => {
+            setLoading(true);
+            try {
+                const response = await axios.post(`${API_URL}/api/translate/simple`, {
+                    text: inputText,
+                    target_lang: targetLang,
+                    src_lang: srcLang,
+                    provider: selectedConfig.provider,
+                    api_url: selectedConfig.api_url,
+                    api_key: selectedConfig.api_key,
+                    model: selectedConfig.model,
+                    system_prompt: systemPrompt
+                });
+                setOutputText(response.data.translated_text);
+            } catch (err) {
+                console.error('Translation failed:', err);
+                // We don't want to alert on every debounce failure, but maybe show a small error in UI
+            } finally {
+                setLoading(false);
+            }
+        }, 800); // 800ms debounce
+
+        return () => clearTimeout(timer);
+    }, [inputText, srcLang, targetLang, systemPrompt, selectedConfigId]);
+
+    const handleTranslate = (e) => {
+        if (e) e.preventDefault();
+        // Manual trigger if needed, though with auto-translate it's redundant.
     };
 
     const getCurrentPresetLabel = () => {
@@ -198,6 +207,7 @@ const SimpleTranslationForm = () => {
                         <label style={{ cursor: 'pointer', margin: 0 }}>원본 언어</label>
                     </div>
                     <select value={srcLang} onChange={(e) => setSrcLang(e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', marginTop: '0.5rem' }}>
+                        <option value="auto">자동 감지 (Auto Detect)</option>
                         <option value="en">영어 (English)</option>
                         <option value="ko">한국어 (Korean)</option>
                         <option value="ja">일본어 (Japanese)</option>
@@ -244,9 +254,30 @@ const SimpleTranslationForm = () => {
                     />
                 </div>
 
-                <button type="submit" disabled={loading} style={{ width: '100%', marginBottom: '1.5rem' }}>
-                    {loading ? '번역 중...' : '번역하기'}
-                </button>
+                <div style={{
+                    textAlign: 'center',
+                    height: '2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1rem',
+                    color: '#4caf50',
+                    fontSize: '0.9rem'
+                }}>
+                    {loading && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span className="spinner" style={{
+                                width: '12px',
+                                height: '12px',
+                                border: '2px solid #4caf50',
+                                borderTop: '2px solid transparent',
+                                borderRadius: '50%',
+                                animation: 'spin 1s linear infinite'
+                            }}></span>
+                            번역 중...
+                        </div>
+                    )}
+                </div>
 
                 <div className="form-group">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -277,6 +308,23 @@ const SimpleTranslationForm = () => {
                     />
                 </div>
             </form>
+            {/* Inline styles for spinner */}
+            <style>
+                {`
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .spinner {
+                    width: 12px;
+                    height: 12px;
+                    border: 2px solid #4caf50;
+                    border-top: 2px solid transparent;
+                    borderRadius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                `}
+            </style>
         </div>
     );
 };
