@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from core.database import get_db, Job
 from core.storage import get_file_content
-from services.translation_service import process_translation_job
+from services.translation_service import process_translation_job, translate_chunk, split_text
+from services.translation_template_service import get_template, save_template
+from services.translation_file_service import extract_text_from_file
 
 router = APIRouter()
 
@@ -66,7 +68,6 @@ async def start_translation_job(request: TranslationRequest, background_tasks: B
 
 @router.get("/translate/template")
 async def get_current_template():
-    from services.translation_template_service import get_template
     return get_template()
 
 class TemplateRequest(BaseModel):
@@ -75,7 +76,6 @@ class TemplateRequest(BaseModel):
 
 @router.post("/translate/template")
 async def update_template(request: TemplateRequest):
-    from services.translation_template_service import save_template
     success = save_template(request.dict())
     if not success:
         raise HTTPException(status_code=500, detail="Failed to save template")
@@ -93,7 +93,6 @@ class SimpleTranslationRequest(BaseModel):
 
 @router.post("/translate/simple")
 async def simple_translation(request: SimpleTranslationRequest):
-    from services.translation_service import translate_chunk, split_text
     
     # Split text if it's too long, though for "simple" we might just process it.
     # But to be safe and consistent, let's split and join.
@@ -125,13 +124,10 @@ async def translate_file(
     src_lang: str = Form(...),
     provider: str = Form(...),
     api_url: str = Form(...),
-    api_key: str = Form(...),
+    api_key: Optional[str] = Form(None),
     model: str = Form(...),
     system_prompt: Optional[str] = Form(None)
 ):
-    from services.translation_file_service import extract_text_from_file
-    from services.translation_service import translate_chunk, split_text
-    
     try:
         content = await file.read()
         filename = file.filename

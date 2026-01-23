@@ -103,9 +103,7 @@ const SimpleTranslationForm = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post(`${API_URL}/api/translate/file`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
+            const response = await axios.post(`${API_URL}/api/translate/file`, formData);
             setOutputText(response.data.translated_text);
             // Show extracted original text too
             setInputText(response.data.original_text);
