@@ -14,6 +14,7 @@ class LLMConfigBase(BaseModel):
     api_key: str
     model: str
     is_default: bool = False
+    is_translation_default: bool = False
 
 class LLMConfigCreate(LLMConfigBase):
     pass
@@ -25,6 +26,7 @@ class LLMConfigUpdate(BaseModel):
     api_key: Optional[str] = None
     model: Optional[str] = None
     is_default: Optional[bool] = None
+    is_translation_default: Optional[bool] = None
 
 class LLMConfigResponse(LLMConfigBase):
     id: int
@@ -46,6 +48,9 @@ def create_llm_config(config: LLMConfigCreate, db: Session = Depends(get_db)):
     
     if config.is_default:
         db.query(LLMConfig).filter(LLMConfig.is_default == True).update({LLMConfig.is_default: False})
+    
+    if config.is_translation_default:
+        db.query(LLMConfig).filter(LLMConfig.is_translation_default == True).update({LLMConfig.is_translation_default: False})
 
     new_config = LLMConfig(**config.dict())
     db.add(new_config)
@@ -63,6 +68,9 @@ def update_llm_config(config_id: int, config: LLMConfigUpdate, db: Session = Dep
 
     if update_data.get("is_default"):
         db.query(LLMConfig).filter(LLMConfig.id != config_id).filter(LLMConfig.is_default == True).update({LLMConfig.is_default: False})
+
+    if update_data.get("is_translation_default"):
+        db.query(LLMConfig).filter(LLMConfig.id != config_id).filter(LLMConfig.is_translation_default == True).update({LLMConfig.is_translation_default: False})
 
     for key, value in update_data.items():
         setattr(db_config, key, value)

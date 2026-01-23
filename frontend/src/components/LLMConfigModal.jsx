@@ -10,7 +10,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
         api_url: '',
         api_key: '',
         model: '',
-        is_default: false
+        is_default: false,
+        is_translation_default: false
     });
     const [error, setError] = useState('');
 
@@ -28,7 +29,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
             api_url: '',
             api_key: '',
             model: '',
-            is_default: false
+            is_default: false,
+            is_translation_default: false
         });
         setError('');
     };
@@ -41,7 +43,8 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
             api_url: config.api_url,
             api_key: config.api_key,
             model: config.model,
-            is_default: config.is_default || false
+            is_default: config.is_default || false,
+            is_translation_default: config.is_translation_default || false
         });
     };
 
@@ -174,7 +177,16 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                 onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
                                 style={{ marginRight: '0.5rem' }}
                             />
-                            <label htmlFor="is_default" style={{ cursor: 'pointer' }}>Set as Default Configuration</label>
+                            <label htmlFor="is_default" style={{ cursor: 'pointer', marginRight: '1.5rem' }}>Set as General Default</label>
+
+                            <input
+                                type="checkbox"
+                                id="is_translation_default"
+                                checked={formData.is_translation_default}
+                                onChange={(e) => setFormData({ ...formData, is_translation_default: e.target.checked })}
+                                style={{ marginRight: '0.5rem' }}
+                            />
+                            <label htmlFor="is_translation_default" style={{ cursor: 'pointer' }}>Set as Translation Default</label>
                         </div>
                         <div style={{ display: 'flex', gap: '1rem' }}>
                             <button type="submit" className="save-btn" style={{ padding: '0.5rem 1rem', background: 'var(--primary-color)', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
@@ -217,6 +229,16 @@ const LLMConfigModal = ({ isOpen, onClose }) => {
                                                 padding: '0.1rem 0.4rem',
                                                 borderRadius: '4px'
                                             }}>Default</span>
+                                        )}
+                                        {config.is_translation_default && (
+                                            <span style={{
+                                                marginLeft: '0.5rem',
+                                                fontSize: '0.75rem',
+                                                backgroundColor: '#9c27b0',
+                                                color: 'white',
+                                                padding: '0.1rem 0.4rem',
+                                                borderRadius: '4px'
+                                            }}>Trans. Default</span>
                                         )}
                                         <div style={{ fontSize: '0.85rem', color: '#aaa' }}>
                                             <span style={{

@@ -27,10 +27,19 @@ const SimpleTranslationForm = () => {
     const [loading, setLoading] = useState(false);
     const [isPromptExpanded, setIsPromptExpanded] = useState(false);
     const [isTargetLangExpanded, setIsTargetLangExpanded] = useState(false);
+    const [isFullScreen, setIsFullScreen] = useState(false);
 
     const [toast, setToast] = useState({ show: false, message: '' });
 
-    const { configs, selectedConfigId, setSelectedConfigId, getSelectedConfig } = useLLM();
+    const { configs, selectedConfigId, setSelectedConfigId, getSelectedConfig, getTranslationDefaultConfig } = useLLM();
+
+    // Auto-select translation default config on mount
+    useEffect(() => {
+        const transDefault = getTranslationDefaultConfig();
+        if (transDefault && configs.length > 0) {
+            setSelectedConfigId(transDefault.id);
+        }
+    }, [configs.length]); // Run when configs are loaded or change
 
     const handleCopy = () => {
         if (!outputText) return;
@@ -293,10 +302,27 @@ const SimpleTranslationForm = () => {
                                 padding: '0.2rem 0.6rem',
                                 borderRadius: '4px',
                                 cursor: outputText ? 'pointer' : 'not-allowed',
-                                fontSize: '0.8rem'
+                                fontSize: '0.8rem',
+                                marginRight: '0.5rem'
                             }}
                         >
                             📋 복사
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setIsFullScreen(true)}
+                            disabled={!outputText}
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid #555',
+                                color: outputText ? 'white' : '#777',
+                                padding: '0.2rem 0.6rem',
+                                borderRadius: '4px',
+                                cursor: outputText ? 'pointer' : 'not-allowed',
+                                fontSize: '0.8rem'
+                            }}
+                        >
+                            ⤢ 전체화면
                         </button>
                     </div>
                     <textarea
@@ -308,6 +334,71 @@ const SimpleTranslationForm = () => {
                     />
                 </div>
             </form>
+
+            {/* Full Screen Modal */}
+            {isFullScreen && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.95)',
+                    zIndex: 2000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '2rem',
+                    animation: 'fadeIn 0.3s'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
+                        <h2 style={{ margin: 0, color: '#4caf50' }}>전체화면 번역 결과</h2>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button
+                                onClick={handleCopy}
+                                style={{
+                                    background: '#4caf50',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '0.6rem 1.2rem',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                📋 결과 복사
+                            </button>
+                            <button
+                                onClick={() => setIsFullScreen(false)}
+                                style={{
+                                    background: 'none',
+                                    border: '1px solid #555',
+                                    color: 'white',
+                                    fontSize: '1.5rem',
+                                    cursor: 'pointer',
+                                    lineHeight: 1,
+                                    padding: '0 0.5rem'
+                                }}
+                            >
+                                &times;
+                            </button>
+                        </div>
+                    </div>
+                    <div style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        fontSize: '1.25rem',
+                        lineHeight: '1.8',
+                        color: '#eee',
+                        padding: '1rem',
+                        backgroundColor: '#1a1a1a',
+                        borderRadius: '8px',
+                        whiteSpace: 'pre-wrap'
+                    }}>
+                        {outputText}
+                    </div>
+                </div>
+            )}
+
             {/* Inline styles for spinner */}
             <style>
                 {`

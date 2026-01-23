@@ -48,6 +48,7 @@ class LLMConfig(Base):
     api_key = Column(String)
     model = Column(String)
     is_default = Column(Boolean, default=False)
+    is_translation_default = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.datetime.now(timezone.utc), onupdate=lambda: datetime.datetime.now(timezone.utc))
 

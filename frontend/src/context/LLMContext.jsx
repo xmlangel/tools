@@ -121,6 +121,10 @@ export const LLMProvider = ({ children }) => {
         return configs.find(c => c.id === selectedConfigId);
     };
 
+    const getTranslationDefaultConfig = () => {
+        return configs.find(c => c.is_translation_default);
+    };
+
     return (
         <LLMContext.Provider value={{
             configs,
@@ -130,6 +134,7 @@ export const LLMProvider = ({ children }) => {
             updateConfig,
             deleteConfig,
             getSelectedConfig,
+            getTranslationDefaultConfig,
             loading
         }}>
             {children}

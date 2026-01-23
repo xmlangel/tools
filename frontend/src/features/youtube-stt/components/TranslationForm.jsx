@@ -14,22 +14,25 @@ const TranslationForm = ({ onJobCreated }) => {
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [showHelp, setShowHelp] = useState(false);
 
-    const { configs, selectedConfigId, setSelectedConfigId, getSelectedConfig } = useLLM();
+    const { configs, selectedConfigId, setSelectedConfigId, getSelectedConfig, getTranslationDefaultConfig } = useLLM();
 
     useEffect(() => {
         fetchFiles();
         fetchSTTJobs();
     }, []);
 
-    // Auto-select default config
+    // Auto-select translation default config
     useEffect(() => {
-        if (!selectedConfigId && configs.length > 0) {
+        const transDefault = getTranslationDefaultConfig();
+        if (transDefault && configs.length > 0) {
+            setSelectedConfigId(transDefault.id);
+        } else if (!selectedConfigId && configs.length > 0) {
             const defaultConfig = configs.find(c => c.is_default);
             if (defaultConfig) {
                 setSelectedConfigId(defaultConfig.id);
             }
         }
-    }, [configs, selectedConfigId, setSelectedConfigId]);
+    }, [configs.length, getTranslationDefaultConfig, setSelectedConfigId]);
 
     const fetchFiles = async () => {
         try {
@@ -318,10 +321,11 @@ const TranslationForm = ({ onJobCreated }) => {
                     <div className="form-group" style={{ flex: 1 }}>
                         <label>Target Language</label>
                         <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
-                            <option value="ko">Korean</option>
-                            <option value="en">English</option>
-                            <option value="ja">Japanese</option>
-                            <option value="zh">Chinese</option>
+                            <option value="auto">자동 (Auto: En↔Ko)</option>
+                            <option value="ko">한국어 (Korean)</option>
+                            <option value="en">영어 (English)</option>
+                            <option value="ja">일본어 (Japanese)</option>
+                            <option value="zh">중국어 (Chinese)</option>
                         </select>
                     </div>
                 </div>
@@ -342,15 +346,49 @@ const TranslationForm = ({ onJobCreated }) => {
 
             {/* File Preview Modal */}
             {viewingFile && (
-                <div className="modal-overlay" onClick={closePreview}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3>File Preview: {viewingFile}</h3>
-                            <button className="close-btn" onClick={closePreview}>✕</button>
-                        </div>
-                        <div className="modal-body">
-                            <pre className="text-content">{fileContent}</pre>
-                        </div>
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.95)',
+                    zIndex: 2000,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: '2rem',
+                    animation: 'fadeIn 0.3s'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
+                        <h2 style={{ margin: 0, color: 'var(--primary-color)' }}>File Preview: {viewingFile}</h2>
+                        <button
+                            onClick={closePreview}
+                            style={{
+                                background: 'none',
+                                border: '1px solid #555',
+                                color: 'white',
+                                fontSize: '1.5rem',
+                                cursor: 'pointer',
+                                lineHeight: 1,
+                                padding: '0 0.5rem'
+                            }}
+                        >
+                            &times;
+                        </button>
+                    </div>
+                    <div style={{
+                        flex: 1,
+                        overflowY: 'auto',
+                        fontSize: '1.1rem',
+                        lineHeight: '1.6',
+                        color: '#eee',
+                        padding: '1.5rem',
+                        backgroundColor: '#1a1a1a',
+                        borderRadius: '8px',
+                        whiteSpace: 'pre-wrap',
+                        border: '1px solid #333'
+                    }}>
+                        {fileContent}
                     </div>
                 </div>
             )}
