@@ -59,7 +59,7 @@ function YoutubeSTTApp() {
     };
 
     return (
-        <div className="container">
+        <div className="wide-container">
             <header>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <button className="back-btn" onClick={() => navigate('/')}>← Home</button>

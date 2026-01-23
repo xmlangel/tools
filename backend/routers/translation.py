@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends, UploadFile, File, Form
 from pydantic import BaseModel
 import json
 from sqlalchemy.orm import Session
@@ -117,3 +117,54 @@ async def simple_translation(request: SimpleTranslationRequest):
     
     final_translation = "\n\n".join(translated_parts)
     return {"translated_text": final_translation}
+
+@router.post("/translate/file")
+async def translate_file(
+    file: UploadFile = File(...),
+    target_lang: str = Form(...),
+    src_lang: str = Form(...),
+    provider: str = Form(...),
+    api_url: str = Form(...),
+    api_key: str = Form(...),
+    model: str = Form(...),
+    system_prompt: str = Form(None)
+):
+    from services.translation_file_service import extract_text_from_file
+    from services.translation_service import translate_chunk, split_text
+    
+    try:
+        content = await file.read()
+        filename = file.filename
+        
+        # Extract text from file
+        try:
+            text = extract_text_from_file(content, filename)
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        # Split and translate
+        chunks = split_text(text)
+        translated_parts = []
+        
+        for chunk in chunks:
+            translated = translate_chunk(
+                chunk, 
+                provider,
+                api_url, 
+                api_key, 
+                model, 
+                target_lang,
+                src_lang,
+                system_prompt
+            )
+            translated_parts.append(translated)
+        
+        final_translation = "\n\n".join(translated_parts)
+        
+        return {
+            "original_text": text,
+            "translated_text": final_translation,
+            "filename": filename
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

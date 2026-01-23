@@ -1,37 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useLLM } from '../../../context/LLMContext';
 import { API_URL } from '../../../config';
+
+const MODES = {
+    TEXT: 'text',
+    IMAGES: 'images',
+    DOCUMENTS: 'documents'
+};
+
+const LANGUAGES = [
+    { code: 'auto', name: '자동 감지', srcOnly: true },
+    { code: 'ko', name: '한국어' },
+    { code: 'en', name: '영어' },
+    { code: 'ja', name: '일본어' },
+    { code: 'zh', name: '중국어' }
+];
 
 const PRESETS = {
     default: {
         label: '전문적 번역 (Professional)',
         prompt: 'You are a professional {source_lang} ({src_lang_code}) to {target_lang} ({tgt_lang_code}) translator. Your goal is to accurately convey the meaning and nuances of the original {source_lang} text while adhering to {target_lang} grammar, vocabulary, and cultural sensitivities. Produce only the {target_lang} translation, without any additional explanations or commentary.'
-    },
-    native: {
-        label: '원어민 스타일 (Native)',
-        prompt: 'You are a helpful assistant. Rewrite the input text into natural, native-like {target_lang}. If the input is already in {target_lang}, refine it to sound more authentic and easy for locals to understand. Use idioms and casual phrasing where appropriate.'
-    },
-    business: {
-        label: '비즈니스 (Business)',
-        prompt: 'You are a professional assistant. Translate or refine the text into formal, professional {target_lang}. Use appropriate business terminology and polite tone.'
     }
 };
 
 const SimpleTranslationForm = () => {
+    const [mode, setMode] = useState(MODES.TEXT);
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
-    const [targetLang, setTargetLang] = useState('auto');
     const [srcLang, setSrcLang] = useState('auto');
-    const [systemPrompt, setSystemPrompt] = useState(PRESETS.default.prompt);
+    const [targetLang, setTargetLang] = useState('ko');
     const [loading, setLoading] = useState(false);
-    const [isPromptExpanded, setIsPromptExpanded] = useState(false);
-    const [isTargetLangExpanded, setIsTargetLangExpanded] = useState(false);
     const [isFullScreen, setIsFullScreen] = useState(false);
-
     const [toast, setToast] = useState({ show: false, message: '' });
+    const [uploadedFile, setUploadedFile] = useState(null);
 
     const { configs, selectedConfigId, setSelectedConfigId, getSelectedConfig, getTranslationDefaultConfig } = useLLM();
+    const fileInputRef = useRef(null);
 
     // Auto-select translation default config on mount
     useEffect(() => {
@@ -39,27 +44,12 @@ const SimpleTranslationForm = () => {
         if (transDefault && configs.length > 0) {
             setSelectedConfigId(transDefault.id);
         }
-    }, [configs.length]); // Run when configs are loaded or change
+    }, [configs.length]);
 
-    const handleCopy = () => {
-        if (!outputText) return;
-        navigator.clipboard.writeText(outputText).then(() => {
-            setToast({ show: true, message: '클립보드에 복사되었습니다.' });
-            setTimeout(() => setToast({ show: false, message: '' }), 3000);
-        });
-    };
-
-    const handlePresetChange = (e) => {
-        const presetKey = e.target.value;
-        if (presetKey && PRESETS[presetKey]) {
-            setSystemPrompt(PRESETS[presetKey].prompt);
-        }
-    };
-
-    // Auto-translation logic with debounce
+    // Auto-translation for TEXT mode
     useEffect(() => {
-        if (!inputText.trim()) {
-            setOutputText('');
+        if (mode !== MODES.TEXT || !inputText.trim()) {
+            if (mode === MODES.TEXT) setOutputText('');
             return;
         }
 
@@ -77,347 +67,309 @@ const SimpleTranslationForm = () => {
                     api_url: selectedConfig.api_url,
                     api_key: selectedConfig.api_key,
                     model: selectedConfig.model,
-                    system_prompt: systemPrompt
+                    system_prompt: PRESETS.default.prompt
                 });
                 setOutputText(response.data.translated_text);
             } catch (err) {
                 console.error('Translation failed:', err);
-                // We don't want to alert on every debounce failure, but maybe show a small error in UI
             } finally {
                 setLoading(false);
             }
-        }, 800); // 800ms debounce
+        }, 800);
 
         return () => clearTimeout(timer);
-    }, [inputText, srcLang, targetLang, systemPrompt, selectedConfigId]);
+    }, [inputText, srcLang, targetLang, mode, selectedConfigId]);
 
-    const handleTranslate = (e) => {
-        if (e) e.preventDefault();
-        // Manual trigger if needed, though with auto-translate it's redundant.
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadedFile(file);
+        const selectedConfig = getSelectedConfig();
+        if (!selectedConfig) {
+            alert('LLM 설정을 먼저 선택해주세요.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('target_lang', targetLang);
+        formData.append('src_lang', srcLang);
+        formData.append('provider', selectedConfig.provider);
+        formData.append('api_url', selectedConfig.api_url);
+        formData.append('api_key', selectedConfig.api_key);
+        formData.append('model', selectedConfig.model);
+        formData.append('system_prompt', PRESETS.default.prompt);
+
+        setLoading(true);
+        try {
+            const response = await axios.post(`${API_URL}/api/translate/file`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setOutputText(response.data.translated_text);
+            // Show extracted original text too
+            setInputText(response.data.original_text);
+        } catch (err) {
+            console.error('File translation failed:', err);
+            alert('파일 번역에 실패했습니다: ' + (err.response?.data?.detail || err.message));
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const getCurrentPresetLabel = () => {
-        const found = Object.values(PRESETS).find(p => p.prompt === systemPrompt);
-        return found ? found.label : '사용자 정의 (Custom)';
+    const handleCopy = () => {
+        if (!outputText) return;
+        navigator.clipboard.writeText(outputText).then(() => {
+            setToast({ show: true, message: '클립보드에 복사되었습니다.' });
+            setTimeout(() => setToast({ show: false, message: '' }), 3000);
+        });
+    };
+
+    const clearInput = () => {
+        setInputText('');
+        setOutputText('');
+        setUploadedFile(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     return (
-        <div className="card" style={{ position: 'relative' }}>
-            {toast.show && (
-                <div style={{
-                    position: 'absolute',
-                    top: '1rem',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    color: 'white',
-                    padding: '0.5rem 1rem',
-                    borderRadius: '4px',
-                    zIndex: 1000,
-                    fontSize: '0.9rem',
-                    animation: 'fadeIn 0.3s, fadeOut 0.3s 2.7s'
-                }}>
-                    {toast.message}
-                </div>
-            )}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ margin: 0 }}>간편 텍스트 번역</h2>
+        <div style={{ width: '100%', color: '#eee', padding: '0 20px' }}>
+            {/* Mode Select Tabs */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', borderBottom: '1px solid #444', paddingBottom: '8px' }}>
+                <button
+                    onClick={() => { setMode(MODES.TEXT); clearInput(); }}
+                    style={{ ...tabBtnStyle, color: mode === MODES.TEXT ? 'var(--primary-color)' : '#aaa', borderBottom: mode === MODES.TEXT ? '2px solid var(--primary-color)' : 'none' }}
+                >
+                    <span style={{ marginRight: '6px' }}>⌨️</span> 텍스트
+                </button>
+                <button
+                    onClick={() => { setMode(MODES.IMAGES); clearInput(); }}
+                    style={{ ...tabBtnStyle, color: mode === MODES.IMAGES ? 'var(--primary-color)' : '#aaa', borderBottom: mode === MODES.IMAGES ? '2px solid var(--primary-color)' : 'none' }}
+                >
+                    <span style={{ marginRight: '6px' }}>🖼️</span> 이미지
+                </button>
+                <button
+                    onClick={() => { setMode(MODES.DOCUMENTS); clearInput(); }}
+                    style={{ ...tabBtnStyle, color: mode === MODES.DOCUMENTS ? 'var(--primary-color)' : '#aaa', borderBottom: mode === MODES.DOCUMENTS ? '2px solid var(--primary-color)' : 'none' }}
+                >
+                    <span style={{ marginRight: '6px' }}>📄</span> 문서
+                </button>
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1.5rem', padding: '1rem', background: '#2a2a2a', borderRadius: '8px', border: '1px solid #555' }}>
-                <label>LLM Configuration</label>
+            {/* LLM Config Select (Compact) */}
+            <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '0.9rem', color: '#aaa' }}>LLM:</span>
                 <select
                     value={selectedConfigId || ''}
                     onChange={(e) => setSelectedConfigId(Number(e.target.value))}
-                    style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}
+                    style={{ background: '#222', border: '1px solid #444', color: 'white', padding: '4px 8px', borderRadius: '4px', fontSize: '0.9rem' }}
                 >
-                    <option value="" disabled>Select LLM Configuration...</option>
                     {configs.map(config => (
-                        <option key={config.id} value={config.id}>
-                            {config.name} ({config.model})
-                        </option>
+                        <option key={config.id} value={config.id}>{config.name} ({config.model})</option>
                     ))}
                 </select>
-                {configs.length === 0 && (
-                    <p style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '0.5rem' }}>
-                        No LLM configurations found. Please add one in the settings.
-                    </p>
-                )}
-                {selectedConfigId && getSelectedConfig() && (
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#aaa' }}>
-                        ℹ️ Using: <strong style={{ color: '#4caf50' }}>{getSelectedConfig().name}</strong> (Model: {getSelectedConfig().model})
-                    </div>
-                )}
             </div>
 
-            <div className="form-group">
-                <div
-                    onClick={() => setIsPromptExpanded(!isPromptExpanded)}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        marginBottom: isPromptExpanded ? '0.5rem' : '0'
-                    }}
-                >
-                    <span style={{ marginRight: '0.5rem', fontSize: '0.8rem' }}>
-                        {isPromptExpanded ? '▼' : '▶'}
-                    </span>
-                    <label style={{ cursor: 'pointer', margin: 0 }}>System Prompt (시스템 프롬프트)</label>
-                    <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#aaa' }}>
-                        {isPromptExpanded ? '' : `(현재: ${getCurrentPresetLabel()}) (클릭하여 펼치기)`}
-                    </span>
-                </div>
+            {/* Side-by-Side Container */}
+            <div style={{ display: 'flex', gap: '0', backgroundColor: '#1e1e1e', borderRadius: '8px', overflow: 'hidden', border: '1px solid #333', minHeight: '650px' }}>
 
-                {isPromptExpanded && (
-                    <div style={{ marginTop: '0.5rem', animation: 'fadeIn 0.2s' }}>
-                        <div style={{ marginBottom: '0.5rem' }}>
-                            <select
-                                onChange={handlePresetChange}
-                                style={{ padding: '0.3rem', borderRadius: '4px', border: '1px solid #555', width: '100%', backgroundColor: '#333', color: 'white' }}
-                                defaultValue="business"
+                {/* Left Side: Input */}
+                <div style={{ flex: 1, borderRight: '1px solid #333', display: 'flex', flexDirection: 'column' }}>
+                    {/* Source Lang Bar */}
+                    <div style={langBarStyle}>
+                        {LANGUAGES.slice(0, 4).map(lang => (
+                            <button
+                                key={lang.code}
+                                onClick={() => setSrcLang(lang.code)}
+                                style={{ ...langBtnStyle, color: srcLang === lang.code ? 'var(--primary-color)' : '#eee' }}
                             >
-                                <option value="" disabled>프리셋 선택...</option>
-                                {Object.entries(PRESETS).map(([key, preset]) => (
-                                    <option key={key} value={key}>{preset.label}</option>
-                                ))}
-                            </select>
+                                {lang.name}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Input Content */}
+                    <div style={{ position: 'relative', flex: 1, padding: '16px', display: 'flex', flexDirection: 'column' }}>
+                        {mode === MODES.TEXT || inputText ? (
+                            <textarea
+                                value={inputText}
+                                onChange={(e) => setInputText(e.target.value)}
+                                placeholder="텍스트 입력"
+                                style={textAreaStyle}
+                            />
+                        ) : (
+                            <div style={uploadBoxStyle} onClick={() => fileInputRef.current.click()}>
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileUpload}
+                                    style={{ display: 'none' }}
+                                    accept={mode === MODES.IMAGES ? "image/*" : ".pdf,.txt,.md"}
+                                />
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{mode === MODES.IMAGES ? '📤' : '📁'}</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>파일 선택</div>
+                                <div style={{ color: '#aaa', marginTop: '8px' }}>
+                                    {mode === MODES.IMAGES ? '컴퓨터에서 이미지를 찾아보세요' : '컴퓨터에서 .pdf, .txt, .md 파일을 찾아보세요'}
+                                </div>
+                            </div>
+                        )}
+                        {uploadedFile && (
+                            <div style={{ marginTop: '16px', padding: '8px', background: '#333', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.9rem' }}>📎 {uploadedFile.name}</span>
+                                <button onClick={clearInput} style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer' }}>✕</button>
+                            </div>
+                        )}
+                        {inputText && mode === MODES.TEXT && (
+                            <button onClick={clearInput} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: '1.2rem', zIndex: 10 }}>&times;</button>
+                        )}
+                        {mode === MODES.TEXT && (
+                            <div style={{ position: 'absolute', bottom: '16px', left: '16px', color: '#666', fontSize: '0.8rem' }}>
+                                {inputText.length} / 5000
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Right Side: Output */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#2b2d31' }}>
+                    {/* Target Lang Bar */}
+                    <div style={langBarStyle}>
+                        {LANGUAGES.filter(l => !l.srcOnly).slice(0, 4).map(lang => (
+                            <button
+                                key={lang.code}
+                                onClick={() => setTargetLang(lang.code)}
+                                style={{ ...langBtnStyle, color: targetLang === lang.code ? 'var(--primary-color)' : '#eee' }}
+                            >
+                                {lang.name}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Output Content */}
+                    <div style={{ position: 'relative', flex: 1, padding: '16px' }}>
+                        {loading ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                                <div className="spinner"></div>
+                            </div>
+                        ) : (
+                            <div style={{ ...textAreaStyle, color: outputText ? 'white' : '#777', cursor: 'text', userSelect: 'text', whiteSpace: 'pre-wrap' }}>
+                                {outputText || '번역 결과'}
+                            </div>
+                        )}
+
+                        {/* Output Actions */}
+                        <div style={{ position: 'absolute', bottom: '16px', right: '16px', display: 'flex', gap: '12px' }}>
+                            <button onClick={handleCopy} style={actionBtnStyle} title="복사">📋</button>
+                            <button onClick={() => setIsFullScreen(true)} style={actionBtnStyle} title="전체화면">⤢</button>
                         </div>
-                        <textarea
-                            value={systemPrompt}
-                            onChange={(e) => setSystemPrompt(e.target.value)}
-                            placeholder="You are a professional translator..."
-                            rows={3}
-                            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}
-                        />
-                        <p style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '0.2rem' }}>
-                            번역 시 사용할 시스템 프롬프트를 직접 수정할 수 있습니다.
-                        </p>
                     </div>
-                )}
-            </div>
-
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ flex: 1 }}>
-                    <div
-                        onClick={() => setIsPromptExpanded(!isPromptExpanded)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            userSelect: 'none',
-                            marginBottom: isPromptExpanded ? '0.5rem' : '0'
-                        }}
-                    >
-                        <span style={{ marginRight: '0.5rem', fontSize: '0.8rem' }}>
-                            {isPromptExpanded ? '▼' : '▶'}
-                        </span>
-                        <label style={{ cursor: 'pointer', margin: 0 }}>원본 언어</label>
-                    </div>
-                    <select value={srcLang} onChange={(e) => setSrcLang(e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', marginTop: '0.5rem' }}>
-                        <option value="auto">자동 감지 (Auto Detect)</option>
-                        <option value="en">영어 (English)</option>
-                        <option value="ko">한국어 (Korean)</option>
-                        <option value="ja">일본어 (Japanese)</option>
-                        <option value="zh">중국어 (Chinese)</option>
-                    </select>
-                </div>
-
-                <div style={{ flex: 1 }}>
-                    <div
-                        onClick={() => setIsTargetLangExpanded(!isTargetLangExpanded)}
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            cursor: 'pointer',
-                            userSelect: 'none',
-                            marginBottom: isTargetLangExpanded ? '0.5rem' : '0'
-                        }}
-                    >
-                        <span style={{ marginRight: '0.5rem', fontSize: '0.8rem' }}>
-                            {isTargetLangExpanded ? '▼' : '▶'}
-                        </span>
-                        <label style={{ cursor: 'pointer', margin: 0 }}>목표 언어</label>
-                    </div>
-                    <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', marginTop: '0.5rem' }}>
-                        <option value="auto">자동 (Auto: En↔Ko)</option>
-                        <option value="ko">한국어 (Korean)</option>
-                        <option value="en">영어 (English)</option>
-                        <option value="ja">일본어 (Japanese)</option>
-                        <option value="zh">중국어 (Chinese)</option>
-                    </select>
                 </div>
             </div>
-
-            <form onSubmit={handleTranslate}>
-                <div className="form-group">
-                    <label>원본 텍스트</label>
-                    <textarea
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        placeholder="번역할 텍스트를 입력하세요..."
-                        rows={6}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}
-                        required
-                    />
-                </div>
-
-                <div style={{
-                    textAlign: 'center',
-                    height: '2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '1rem',
-                    color: '#4caf50',
-                    fontSize: '0.9rem'
-                }}>
-                    {loading && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <span className="spinner" style={{
-                                width: '12px',
-                                height: '12px',
-                                border: '2px solid #4caf50',
-                                borderTop: '2px solid transparent',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite'
-                            }}></span>
-                            번역 중...
-                        </div>
-                    )}
-                </div>
-
-                <div className="form-group">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <label style={{ margin: 0 }}>번역 결과</label>
-                        <button
-                            type="button"
-                            onClick={handleCopy}
-                            disabled={!outputText}
-                            style={{
-                                background: 'transparent',
-                                border: '1px solid #555',
-                                color: outputText ? 'white' : '#777',
-                                padding: '0.2rem 0.6rem',
-                                borderRadius: '4px',
-                                cursor: outputText ? 'pointer' : 'not-allowed',
-                                fontSize: '0.8rem',
-                                marginRight: '0.5rem'
-                            }}
-                        >
-                            📋 복사
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setIsFullScreen(true)}
-                            disabled={!outputText}
-                            style={{
-                                background: 'transparent',
-                                border: '1px solid #555',
-                                color: outputText ? 'white' : '#777',
-                                padding: '0.2rem 0.6rem',
-                                borderRadius: '4px',
-                                cursor: outputText ? 'pointer' : 'not-allowed',
-                                fontSize: '0.8rem'
-                            }}
-                        >
-                            ⤢ 전체화면
-                        </button>
-                    </div>
-                    <textarea
-                        value={outputText}
-                        readOnly
-                        placeholder="번역 결과가 여기에 표시됩니다..."
-                        rows={6}
-                        style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white' }}
-                    />
-                </div>
-            </form>
 
             {/* Full Screen Modal */}
             {isFullScreen && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.95)',
-                    zIndex: 2000,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    padding: '2rem',
-                    animation: 'fadeIn 0.3s'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '1rem' }}>
-                        <h2 style={{ margin: 0, color: '#4caf50' }}>전체화면 번역 결과</h2>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button
-                                onClick={handleCopy}
-                                style={{
-                                    background: '#4caf50',
-                                    color: 'white',
-                                    border: 'none',
-                                    padding: '0.6rem 1.2rem',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    fontWeight: 'bold'
-                                }}
-                            >
-                                📋 결과 복사
-                            </button>
-                            <button
-                                onClick={() => setIsFullScreen(false)}
-                                style={{
-                                    background: 'none',
-                                    border: '1px solid #555',
-                                    color: 'white',
-                                    fontSize: '1.5rem',
-                                    cursor: 'pointer',
-                                    lineHeight: 1,
-                                    padding: '0 0.5rem'
-                                }}
-                            >
-                                &times;
-                            </button>
+                <div style={fullScreenOverlayStyle}>
+                    <div style={fullScreenHeaderStyle}>
+                        <h2 style={{ margin: 0, color: 'var(--primary-color)' }}>전체화면 번역 결과</h2>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button onClick={handleCopy} style={primaryBtnStyle}>📋 결과 복사</button>
+                            <button onClick={() => setIsFullScreen(false)} style={closeBtnStyle}>&times;</button>
                         </div>
                     </div>
-                    <div style={{
-                        flex: 1,
-                        overflowY: 'auto',
-                        fontSize: '1.25rem',
-                        lineHeight: '1.8',
-                        color: '#eee',
-                        padding: '1rem',
-                        backgroundColor: '#1a1a1a',
-                        borderRadius: '8px',
-                        whiteSpace: 'pre-wrap'
-                    }}>
+                    <div style={fullScreenContentStyle}>
                         {outputText}
                     </div>
                 </div>
             )}
 
-            {/* Inline styles for spinner */}
+            {/* Toast Notification */}
+            {toast.show && (
+                <div style={toastStyle}>{toast.message}</div>
+            )}
+
+            {/* Spinner Styles */}
             <style>
                 {`
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                 .spinner {
-                    width: 12px;
-                    height: 12px;
-                    border: 2px solid #4caf50;
-                    border-top: 2px solid transparent;
-                    borderRadius: 50%;
+                    width: 24px; height: 24px;
+                    border: 3px solid rgba(100, 108, 255, 0.3);
+                    border-top: 3px solid var(--primary-color);
+                    border-radius: 50%;
                     animation: spin 1s linear infinite;
                 }
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
                 `}
             </style>
         </div>
     );
+};
+
+// Styles
+const tabBtnStyle = {
+    background: 'none', border: 'none', padding: '8px 16px', cursor: 'pointer',
+    fontSize: '0.95rem', fontWeight: '500', transition: 'all 0.2s', outline: 'none'
+};
+
+const langBarStyle = {
+    display: 'flex', alignItems: 'center', height: '48px',
+    borderBottom: '1px solid #333', padding: '0 8px', gap: '4px'
+};
+
+const langBtnStyle = {
+    background: 'none', border: 'none', padding: '4px 12px', cursor: 'pointer',
+    fontSize: '0.85rem', fontWeight: '500', borderRadius: '4px', outline: 'none'
+};
+
+const textAreaStyle = {
+    width: '100%', height: '100%', background: 'none', border: 'none',
+    color: 'white', resize: 'none', fontSize: '1.2rem', lineHeight: '1.5',
+    outline: 'none', overflowY: 'auto'
+};
+
+const uploadBoxStyle = {
+    height: '100%', display: 'flex', flexDirection: 'column',
+    justifyContent: 'center', alignItems: 'center', cursor: 'pointer',
+    border: '2px dashed #444', borderRadius: '12px', padding: '40px',
+    transition: 'all 0.2s', backgroundColor: 'rgba(255,255,255,0.02)'
+};
+
+const actionBtnStyle = {
+    background: 'rgba(255,255,255,0.05)', border: '1px solid #444', color: '#aaa', cursor: 'pointer',
+    fontSize: '1.1rem', padding: '6px', borderRadius: '6px', transition: 'all 0.2s'
+};
+
+const fullScreenOverlayStyle = {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 2000,
+    display: 'flex', flexDirection: 'column', padding: '2rem', animation: 'fadeIn 0.3s'
+};
+
+const fullScreenHeaderStyle = {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: '1.5rem', borderBottom: '1px solid #333', paddingBottom: '1rem'
+};
+
+const fullScreenContentStyle = {
+    flex: 1, overflowY: 'auto', fontSize: '1.25rem', lineHeight: '1.8',
+    color: '#eee', padding: '1.5rem', backgroundColor: '#1a1a1a',
+    borderRadius: '8px', whiteSpace: 'pre-wrap', border: '1px solid #333'
+};
+
+const primaryBtnStyle = {
+    background: 'var(--primary-color)', color: 'white', border: 'none',
+    padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold'
+};
+
+const closeBtnStyle = {
+    background: 'none', border: '1px solid #555', color: 'white',
+    fontSize: '2rem', cursor: 'pointer', lineHeight: 1, padding: '0 12px', borderRadius: '6px'
+};
+
+const toastStyle = {
+    position: 'fixed', bottom: '2rem', left: '50%', transform: 'translateX(-50%)',
+    backgroundColor: 'rgba(0,0,0,0.9)', color: 'white', padding: '10px 20px',
+    borderRadius: '8px', zIndex: 3000, animation: 'fadeIn 0.3s', border: '1px solid #444'
 };
 
 export default SimpleTranslationForm;
