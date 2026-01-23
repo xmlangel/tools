@@ -41,7 +41,10 @@ def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', s
         'auto': ('Detect Automatically', 'auto')
     }
     
-    target_name, target_code = lang_map.get(target_lang, ('Korean', 'ko'))
+    # Determine basic source/target info
+    target_info = lang_map.get(target_lang, ('Korean', 'ko'))
+    target_name, target_code = target_info
+    
     source_info = lang_map.get(src_lang, ('English', 'en'))
     source_name, source_code = source_info
 
@@ -50,36 +53,46 @@ def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', s
     else:
         system_prompt = template.get("system_prompt", DEFAULT_TEMPLATE["system_prompt"])
 
-    # Handle placeholders in system prompt
-    system_prompt = system_prompt.replace("{target_lang}", target_name)
-    system_prompt = system_prompt.replace("{tgt_lang_code}", target_code)
-    
-    if src_lang == 'auto':
-        system_prompt = system_prompt.replace("{source_lang}", "the original")
-        system_prompt = system_prompt.replace("{src_lang_code}", "auto-detected")
-        # Add explicit auto-detection instruction
-        system_prompt += " The source language should be automatically detected from the input text."
-    else:
+    # Handle 'auto' cases specifically for clearer instructions
+    if src_lang == 'auto' and target_lang == 'auto':
+        # Truly automatic bidirectional translation (defaulting to Ko <-> En)
+        system_prompt = "You are a professional bidirectional translator. Your task is to auto-detect the source language and translate it into the most appropriate target language. If the input is in English, translate it to Korean. If the input is in Korean, translate it to English. For other languages, default to English. Produce only the translation result without any commentary."
+    elif src_lang == 'auto':
+        # Known target, auto source
+        source_name = "the detected source language"
+        source_code = "auto-detected"
+        
+        system_prompt = system_prompt.replace("{target_lang}", target_name)
+        system_prompt = system_prompt.replace("{tgt_lang_code}", target_code)
         system_prompt = system_prompt.replace("{source_lang}", source_name)
         system_prompt = system_prompt.replace("{src_lang_code}", source_code)
-    
-    # Add auto-detection instruction if target is auto
-    if target_lang == 'auto':
-        auto_instruction = " If the input is in English, translate it to Korean. If the input is in Korean, translate it to English."
-        system_prompt += auto_instruction
+        system_prompt += f" The source language should be automatically detected from the input text before translating to {target_name}."
+    elif target_lang == 'auto':
+        # Known source, auto target (En -> Ko or Ko -> En or other -> En)
+        if src_lang == 'en':
+            target_name, target_code = ('Korean', 'ko')
+        else:
+            target_name, target_code = ('English', 'en')
+            
+        system_prompt = system_prompt.replace("{target_lang}", target_name)
+        system_prompt = system_prompt.replace("{tgt_lang_code}", target_code)
+        system_prompt = system_prompt.replace("{source_lang}", source_name)
+        system_prompt = system_prompt.replace("{src_lang_code}", source_code)
+        system_prompt += f" Since target language is auto-detected, translate this {source_name} text into {target_name}."
+    else:
+        # Static source and target
+        system_prompt = system_prompt.replace("{target_lang}", target_name)
+        system_prompt = system_prompt.replace("{tgt_lang_code}", target_code)
+        system_prompt = system_prompt.replace("{source_lang}", source_name)
+        system_prompt = system_prompt.replace("{src_lang_code}", source_code)
 
     user_prompt_template = template.get("user_prompt_template", DEFAULT_TEMPLATE["user_prompt_template"])
     
-    # Handle placeholders in user prompt
+    # Handle placeholders in user prompt (using final determined names/codes)
     user_prompt_template = user_prompt_template.replace("{target_lang}", target_name)
     user_prompt_template = user_prompt_template.replace("{tgt_lang_code}", target_code)
-    
-    if src_lang == 'auto':
-        user_prompt_template = user_prompt_template.replace("{source_lang}", "detected language")
-        user_prompt_template = user_prompt_template.replace("{src_lang_code}", "auto")
-    else:
-        user_prompt_template = user_prompt_template.replace("{source_lang}", source_name)
-        user_prompt_template = user_prompt_template.replace("{src_lang_code}", source_code)
+    user_prompt_template = user_prompt_template.replace("{source_lang}", source_name)
+    user_prompt_template = user_prompt_template.replace("{src_lang_code}", source_code)
     
     user_prompt = user_prompt_template.replace("{text}", text)
     
