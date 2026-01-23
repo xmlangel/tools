@@ -29,26 +29,31 @@ def split_text(text, chunk_size=2000):
         chunks.append(current_chunk)
     return chunks
 
-def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', system_prompt_override=None):
+def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', src_lang='en', system_prompt_override=None):
     template = get_template()
     
     # Map target_lang code to name
     lang_map = {
-        'ko': 'Korean',
-        'en': 'English',
-        'ja': 'Japanese',
-        'zh': 'Chinese',
-        'auto': 'Korean or English'
+        'ko': ('Korean', 'ko'),
+        'en': ('English', 'en'),
+        'ja': ('Japanese', 'ja'),
+        'zh': ('Chinese', 'zh'),
+        'auto': ('Korean or English', 'auto')
     }
-    target_name = lang_map.get(target_lang, 'Korean')
+    
+    target_name, target_code = lang_map.get(target_lang, ('Korean', 'ko'))
+    source_name, source_code = lang_map.get(src_lang, ('English', 'en'))
 
     if system_prompt_override:
         system_prompt = system_prompt_override
     else:
         system_prompt = template.get("system_prompt", DEFAULT_TEMPLATE["system_prompt"])
 
-    # Always replace {target_lang} placeholder with the actual target language name
+    # Handle placeholders in system prompt
     system_prompt = system_prompt.replace("{target_lang}", target_name)
+    system_prompt = system_prompt.replace("{tgt_lang_code}", target_code)
+    system_prompt = system_prompt.replace("{source_lang}", source_name)
+    system_prompt = system_prompt.replace("{src_lang_code}", source_code)
     
     # Add auto-detection instruction if target is auto
     if target_lang == 'auto':
@@ -57,12 +62,15 @@ def translate_chunk(text, provider, api_url, api_key, model, target_lang='ko', s
 
     user_prompt_template = template.get("user_prompt_template", DEFAULT_TEMPLATE["user_prompt_template"])
     
-    # Always replace {target_lang} placeholder with the actual target language name
+    # Handle placeholders in user prompt
     user_prompt_template = user_prompt_template.replace("{target_lang}", target_name)
+    user_prompt_template = user_prompt_template.replace("{tgt_lang_code}", target_code)
+    user_prompt_template = user_prompt_template.replace("{source_lang}", source_name)
+    user_prompt_template = user_prompt_template.replace("{src_lang_code}", source_code)
     
     user_prompt = user_prompt_template.replace("{text}", text)
     
-    logger.info(f"Target Language: {target_lang} ({target_name})")
+    logger.info(f"Translation Task: {source_name} ({source_code}) -> {target_name} ({target_code})")
     logger.info(f"System Prompt: {system_prompt}")
     logger.info(f"User Prompt (first 1000 chars): {user_prompt[:1000]}...")
     
@@ -104,8 +112,8 @@ def summarize_chunk(text, provider, api_url, api_key, model, target_lang='ko'):
         logger.error(f"Summary error: {e}")
         return f"[Summary Failed] {text[:50]}..."
 
-def process_translation_job(job_id: int, text_content: str, provider: str, api_url: str, api_key: str, model: str, original_filename: str, target_lang: str = 'ko'):
-    logger.info(f"Starting Translation job {job_id} with model {model} for file {original_filename} to {target_lang}")
+def process_translation_job(job_id: int, text_content: str, provider: str, api_url: str, api_key: str, model: str, original_filename: str, target_lang: str = 'ko', src_lang: str = 'en'):
+    logger.info(f"Starting Translation job {job_id} with model {model} for file {original_filename} from {src_lang} to {target_lang}")
     db: Session = SessionLocal()
     job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
@@ -131,7 +139,7 @@ def process_translation_job(job_id: int, text_content: str, provider: str, api_u
                 return
 
             logger.info(f"Job {job_id}: Translating chunk {i+1}/{total_chunks} ({len(chunk)} chars)...")
-            translated = translate_chunk(chunk, provider, api_url, api_key, model, target_lang)
+            translated = translate_chunk(chunk, provider, api_url, api_key, model, target_lang, src_lang)
             translated_parts.append(translated)
 
             # Generate summary for the chunk

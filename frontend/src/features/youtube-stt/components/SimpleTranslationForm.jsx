@@ -5,8 +5,8 @@ import { API_URL } from '../../../config';
 
 const PRESETS = {
     default: {
-        label: '기본 (Default)',
-        prompt: 'You are a professional translator. Translate the following text into {target_lang} naturally.'
+        label: '전문적 번역 (Professional)',
+        prompt: 'You are a professional {source_lang} ({src_lang_code}) to {target_lang} ({tgt_lang_code}) translator. Your goal is to accurately convey the meaning and nuances of the original {source_lang} text while adhering to {target_lang} grammar, vocabulary, and cultural sensitivities. Produce only the {target_lang} translation, without any additional explanations or commentary.'
     },
     native: {
         label: '원어민 스타일 (Native)',
@@ -22,7 +22,8 @@ const SimpleTranslationForm = () => {
     const [inputText, setInputText] = useState('');
     const [outputText, setOutputText] = useState('');
     const [targetLang, setTargetLang] = useState('auto');
-    const [systemPrompt, setSystemPrompt] = useState(PRESETS.business.prompt);
+    const [srcLang, setSrcLang] = useState('en');
+    const [systemPrompt, setSystemPrompt] = useState(PRESETS.default.prompt);
     const [loading, setLoading] = useState(false);
     const [isPromptExpanded, setIsPromptExpanded] = useState(false);
     const [isTargetLangExpanded, setIsTargetLangExpanded] = useState(false);
@@ -61,6 +62,7 @@ const SimpleTranslationForm = () => {
             const response = await axios.post(`${API_URL}/api/translate/simple`, {
                 text: inputText,
                 target_lang: targetLang,
+                src_lang: srcLang,
                 provider: selectedConfig.provider,
                 api_url: selectedConfig.api_url,
                 api_key: selectedConfig.api_key,
@@ -178,37 +180,55 @@ const SimpleTranslationForm = () => {
                 )}
             </div>
 
-            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                <div
-                    onClick={() => setIsTargetLangExpanded(!isTargetLangExpanded)}
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        marginBottom: isTargetLangExpanded ? '0.5rem' : '0'
-                    }}
-                >
-                    <span style={{ marginRight: '0.5rem', fontSize: '0.8rem' }}>
-                        {isTargetLangExpanded ? '▼' : '▶'}
-                    </span>
-                    <label style={{ cursor: 'pointer', margin: 0 }}>목표 언어</label>
-                    <span style={{ marginLeft: '0.5rem', fontSize: '0.8rem', color: '#aaa' }}>
-                        {isTargetLangExpanded ? '' : `(현재: ${targetLang === 'auto' ? '자동' : targetLang}) (클릭하여 펼치기)`}
-                    </span>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ flex: 1 }}>
+                    <div
+                        onClick={() => setIsPromptExpanded(!isPromptExpanded)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            marginBottom: isPromptExpanded ? '0.5rem' : '0'
+                        }}
+                    >
+                        <span style={{ marginRight: '0.5rem', fontSize: '0.8rem' }}>
+                            {isPromptExpanded ? '▼' : '▶'}
+                        </span>
+                        <label style={{ cursor: 'pointer', margin: 0 }}>원본 언어</label>
+                    </div>
+                    <select value={srcLang} onChange={(e) => setSrcLang(e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', marginTop: '0.5rem' }}>
+                        <option value="en">영어 (English)</option>
+                        <option value="ko">한국어 (Korean)</option>
+                        <option value="ja">일본어 (Japanese)</option>
+                        <option value="zh">중국어 (Chinese)</option>
+                    </select>
                 </div>
 
-                {isTargetLangExpanded && (
-                    <div style={{ marginTop: '0.5rem', animation: 'fadeIn 0.2s' }}>
-                        <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px' }}>
-                            <option value="auto">자동 (Auto: En↔Ko)</option>
-                            <option value="ko">한국어</option>
-                            <option value="en">영어</option>
-                            <option value="ja">일본어</option>
-                            <option value="zh">중국어</option>
-                        </select>
+                <div style={{ flex: 1 }}>
+                    <div
+                        onClick={() => setIsTargetLangExpanded(!isTargetLangExpanded)}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            userSelect: 'none',
+                            marginBottom: isTargetLangExpanded ? '0.5rem' : '0'
+                        }}
+                    >
+                        <span style={{ marginRight: '0.5rem', fontSize: '0.8rem' }}>
+                            {isTargetLangExpanded ? '▼' : '▶'}
+                        </span>
+                        <label style={{ cursor: 'pointer', margin: 0 }}>목표 언어</label>
                     </div>
-                )}
+                    <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', marginTop: '0.5rem' }}>
+                        <option value="auto">자동 (Auto: En↔Ko)</option>
+                        <option value="ko">한국어 (Korean)</option>
+                        <option value="en">영어 (English)</option>
+                        <option value="ja">일본어 (Japanese)</option>
+                        <option value="zh">중국어 (Chinese)</option>
+                    </select>
+                </div>
             </div>
 
             <form onSubmit={handleTranslate}>

@@ -213,7 +213,8 @@ def process_stt_job(job_id: int, youtube_url: str, model_size: str):
                         llm_config.openwebui_url,
                         llm_config.api_key,
                         llm_config.model,
-                        target_lang='ko'
+                        target_lang='ko',
+                        src_lang='en'
                     )
                     translated_parts.append(translated)
                 
@@ -348,7 +349,8 @@ def process_uploaded_file_job(job_id: int, audio_file_path: str, model_size: str
                         llm_config.openwebui_url,
                         llm_config.api_key,
                         llm_config.model,
-                        target_lang='ko'
+                        target_lang='ko',
+                        src_lang='en'
                     )
                     translated_parts.append(translated)
                 

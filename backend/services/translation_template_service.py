@@ -7,22 +7,8 @@ logger = setup_logger("translation_template_service")
 TEMPLATE_FILE = "translation_template.json"
 
 DEFAULT_TEMPLATE = {
-    "system_prompt": "You are a professional translator. Your task is to translate text into {target_lang}. CRITICAL: All output must be in {target_lang} language only. Do not use any other language in your response. Return ONLY the translated text in {target_lang}. Do not include any explanations, notes, or comments.",
-    "user_prompt_template": """Translate the following text into {target_lang}.
-
-IMPORTANT INSTRUCTIONS:
-- Output language: {target_lang} ONLY
-- Do NOT output in any other language
-- Maintain the original meaning and tone
-- Preserve paragraph breaks and structure from the original text
-- Add a line break after each sentence for better readability
-- Return ONLY the translation, nothing else
-
-[Source Text Start]
-{text}
-[Source Text End]
-
-Provide the translation in {target_lang}:"""
+    "system_prompt": "You are a professional {source_lang} ({src_lang_code}) to {target_lang} ({tgt_lang_code}) translator. Your goal is to accurately convey the meaning and nuances of the original {source_lang} text while adhering to {target_lang} grammar, vocabulary, and cultural sensitivities. Produce only the {target_lang} translation, without any additional explanations or commentary.",
+    "user_prompt_template": "Please translate the following {source_lang} text into {target_lang}:\n\n{text}"
 }
 
 def get_template():

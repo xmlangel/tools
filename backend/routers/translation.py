@@ -12,6 +12,7 @@ router = APIRouter()
 class TranslationRequest(BaseModel):
     input_file: str
     target_lang: str
+    src_lang: str = 'en'
     provider: str
     api_url: str
     api_key: str
@@ -47,7 +48,8 @@ async def start_translation_job(request: TranslationRequest, background_tasks: B
         request.api_key, 
         request.model,
         request.input_file,
-        request.target_lang
+        request.target_lang,
+        request.src_lang
     )
 
     return {
@@ -82,6 +84,7 @@ async def update_template(request: TemplateRequest):
 class SimpleTranslationRequest(BaseModel):
     text: str
     target_lang: str
+    src_lang: str = 'en'
     provider: str
     api_url: str
     api_key: str
@@ -107,6 +110,7 @@ async def simple_translation(request: SimpleTranslationRequest):
             request.api_key, 
             request.model, 
             request.target_lang,
+            request.src_lang,
             request.system_prompt
         )
         translated_parts.append(translated)

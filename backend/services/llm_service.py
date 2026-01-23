@@ -65,7 +65,7 @@ def _send_openwebui_request(api_url: str, api_key: str, model: str, system_promp
 
 def _send_ollama_request(api_url: str, api_key: str, model: str, system_prompt: str, user_prompt: str, temperature: float) -> str:
     """
-    Sends a request to Ollama API.
+    Sends a request to Ollama API using the generate endpoint.
     """
     base_url = api_url.rstrip('/')
     target_url = f"{base_url}/api/generate"
@@ -74,22 +74,21 @@ def _send_ollama_request(api_url: str, api_key: str, model: str, system_prompt: 
         "Content-Type": "application/json"
     }
     
-    # Add API key header if provided (Ollama may not always require it)
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     
-    # Combine system and user prompts for Ollama
-    combined_prompt = f"{system_prompt}\n\n{user_prompt}"
-    
     data = {
         "model": model,
-        "prompt": combined_prompt,
-        "temperature": temperature,
+        "prompt": user_prompt,
+        "system": system_prompt,
+        "options": {
+            "temperature": temperature
+        },
         "stream": False
     }
 
     try:
-        logger.info(f"Sending Ollama request to {target_url} (Model: {model})")
+        logger.info(f"Sending Ollama generate request to {target_url} (Model: {model})")
         response = requests.post(target_url, headers=headers, json=data, timeout=120)
         response.raise_for_status()
         result = response.json()
@@ -102,4 +101,10 @@ def _send_ollama_request(api_url: str, api_key: str, model: str, system_prompt: 
             
     except Exception as e:
         logger.error(f"Ollama request failed: {e}")
+        if response is not None and response.status_code == 404:
+            try:
+                error_msg = response.json().get('error', str(e))
+                logger.error(f"Ollama error detail: {error_msg}")
+            except:
+                pass
         raise e

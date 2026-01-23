@@ -7,6 +7,7 @@ import { API_URL } from '../../../config';
 const TranslationForm = ({ onJobCreated }) => {
     const [inputFile, setInputFile] = useState('');
     const [targetLang, setTargetLang] = useState('ko');
+    const [srcLang, setSrcLang] = useState('en');
     const [loading, setLoading] = useState(false);
     const [files, setFiles] = useState([]);
     const [sttJobs, setSttJobs] = useState([]);  // Store STT jobs to get YouTube URLs
@@ -110,6 +111,7 @@ const TranslationForm = ({ onJobCreated }) => {
             const response = await axios.post(`${API_URL}/api/translate`, {
                 input_file: inputFile,
                 target_lang: targetLang,
+                src_lang: srcLang,
                 provider: selectedConfig.provider,
                 api_url: selectedConfig.api_url,
                 api_key: selectedConfig.api_key,
@@ -301,14 +303,26 @@ const TranslationForm = ({ onJobCreated }) => {
                     </div>
                 </div>
 
-                <div className="form-group">
-                    <label>Target Language</label>
-                    <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
-                        <option value="ko">Korean</option>
-                        <option value="en">English</option>
-                        <option value="ja">Japanese</option>
-                        <option value="zh">Chinese</option>
-                    </select>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                        <label>Source Language</label>
+                        <select value={srcLang} onChange={(e) => setSrcLang(e.target.value)}>
+                            <option value="en">English</option>
+                            <option value="ko">Korean</option>
+                            <option value="ja">Japanese</option>
+                            <option value="zh">Chinese</option>
+                        </select>
+                    </div>
+
+                    <div className="form-group" style={{ flex: 1 }}>
+                        <label>Target Language</label>
+                        <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
+                            <option value="ko">Korean</option>
+                            <option value="en">English</option>
+                            <option value="ja">Japanese</option>
+                            <option value="zh">Chinese</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div className="button-group">
