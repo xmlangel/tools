@@ -5,7 +5,6 @@ import { API_URL } from '../../../config';
 
 const MODES = {
     TEXT: 'text',
-    IMAGES: 'images',
     DOCUMENTS: 'documents'
 };
 
@@ -157,12 +156,6 @@ const SimpleTranslationForm = () => {
                     <span style={{ marginRight: '6px' }}>⌨️</span> 텍스트
                 </button>
                 <button
-                    onClick={() => { setMode(MODES.IMAGES); clearInput(); }}
-                    style={{ ...tabBtnStyle, color: mode === MODES.IMAGES ? 'var(--primary-color)' : '#aaa', borderBottom: mode === MODES.IMAGES ? '2px solid var(--primary-color)' : 'none' }}
-                >
-                    <span style={{ marginRight: '6px' }}>🖼️</span> 이미지
-                </button>
-                <button
                     onClick={() => { setMode(MODES.DOCUMENTS); clearInput(); }}
                     style={{ ...tabBtnStyle, color: mode === MODES.DOCUMENTS ? 'var(--primary-color)' : '#aaa', borderBottom: mode === MODES.DOCUMENTS ? '2px solid var(--primary-color)' : 'none' }}
                 >
@@ -218,12 +211,12 @@ const SimpleTranslationForm = () => {
                                     ref={fileInputRef}
                                     onChange={handleFileUpload}
                                     style={{ display: 'none' }}
-                                    accept={mode === MODES.IMAGES ? "image/*" : ".pdf,.txt,.md"}
+                                    accept=".pdf,.txt,.md"
                                 />
-                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>{mode === MODES.IMAGES ? '📤' : '📁'}</div>
+                                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📁</div>
                                 <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>파일 선택</div>
                                 <div style={{ color: '#aaa', marginTop: '8px' }}>
-                                    {mode === MODES.IMAGES ? '컴퓨터에서 이미지를 찾아보세요' : '컴퓨터에서 .pdf, .txt, .md 파일을 찾아보세요'}
+                                    컴퓨터에서 .pdf, .txt, .md 파일을 찾아보세요
                                 </div>
                             </div>
                         )}

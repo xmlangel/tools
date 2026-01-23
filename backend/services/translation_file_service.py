@@ -28,12 +28,3 @@ def extract_text_from_file(file_content: bytes, filename: str) -> str:
             
     else:
         raise ValueError(f"Unsupported file extension: {ext}")
-
-def extract_text_from_image(file_content: bytes, filename: str) -> str:
-    """
-    Placeholder for image text extraction.
-    Currently returns a message since OCR/Vision logic needs to be integrated with LLM or local library.
-    """
-    # For now, we will return a descriptive text that the frontend can display or the LLM can process if it's a vision model.
-    # If the user is using a vision model, we should ideally pass the image bytes to the LLM directly.
-    return "[Image processing requested. This feature requires a Vision-capable LLM or OCR integration.]"
