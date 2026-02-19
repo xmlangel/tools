@@ -1,0 +1,14 @@
+# Local binaries
+/pg_regress
+
+# Generated subdirectories
+/tmp_check/
+/results/
+/log/
+
+# Note: regression.* are only left behind on a failure; that's why they're not ignored
+#/regression.diffs
+#/regression.out
+
+# Generated JUnit XML reports from convert_to_junit.py
+pg_test_result_make_check_*.xml

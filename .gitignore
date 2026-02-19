@@ -64,3 +64,6 @@ yarn-error.log
 yarn-debug.log
 dist/
 .DS_Store
+*confluence_venv*
+*venv*
+cli/pg-regress/__MACOSX/*
