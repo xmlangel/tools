@@ -1,6 +1,6 @@
 # Local binaries
 /pg_regress
-
+/pg_sample
 # Generated subdirectories
 /tmp_check/
 /results/
@@ -12,3 +12,4 @@
 
 # Generated JUnit XML reports from convert_to_junit.py
 pg_test_result_make_check_*.xml
+*.xml

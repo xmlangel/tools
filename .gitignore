@@ -67,3 +67,4 @@ dist/
 *confluence_venv*
 *venv*
 cli/pg-regress/__MACOSX/*
+cli/pg-regress/.jira_regress_state.json
