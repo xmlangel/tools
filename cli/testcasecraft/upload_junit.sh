@@ -54,10 +54,13 @@ fi
 echo "Successfully logged in. Token acquired."
 
 echo "--- Step 2: Upload JUnit XML ---"
+# 파일명에서 확장자를 제거하여 실행 이름으로 사용
+RUN_NAME=$(basename "$JUNIT_FILE" | sed 's/\.[^.]*$//')
+
 # 2. JUnit XML 파일 업로드
 # /api/junit-results/upload?projectId=<projectId> 호출
 # -F "file=@<path>" 옵션으로 multipart/form-data 전송
-UPLOAD_RESPONSE=$(curl -s -X POST "${BASE_URL}/api/junit-results/upload?projectId=${PROJECT_ID}" \
+UPLOAD_RESPONSE=$(curl -s -X POST "${BASE_URL}/api/junit-results/upload?projectId=${PROJECT_ID}&executionName=${RUN_NAME}" \
     -H "Authorization: Bearer ${TOKEN}" \
     -F "file=@${JUNIT_FILE}")
 
