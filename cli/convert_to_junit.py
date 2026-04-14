@@ -1,3 +1,8 @@
+"""
+PostgreSQL 회귀 테스트 결과(regression.out, regression.diffs)를 읽어
+JUnit XML 형식으로 변환하는 스크립트입니다.
+테스트 실패 시 구체적인 SQL 단계와 예상/실제 결과의 차이점을 포함합니다.
+"""
 import sys
 import re
 import os
@@ -7,7 +12,7 @@ from datetime import datetime
 
 def clean_xml_string(s):
     """
-    Removes characters that are invalid in XML.
+    XML 파일에서 사용할 수 없는 유효하지 않은 문자들을 제거합니다.
     """
     if s is None:
         return ""
@@ -16,8 +21,8 @@ def clean_xml_string(s):
 
 def summarize_diff(diff_content):
     """
-    Analyzes diff content and creates a human-readable summary.
-    Returns (summary_string, list_of_mismatches)
+    diff 내용을 분석하여 사람이 읽기 쉬운 요약 정보를 생성합니다.
+    반환값: (요약 문자열, 불일치 목록)
     """
     if not diff_content:
         return "", []
@@ -87,7 +92,7 @@ def summarize_diff(diff_content):
 
 def parse_regression_diffs(diff_file):
     """
-    Parses regression.diffs and returns a mapping of test name to its diff content.
+    regression.diffs 파일을 파싱하여 테스트 이름별 diff 내용을 매핑하여 반환합니다.
     """
     diffs = {}
     if not os.path.exists(diff_file):
@@ -117,7 +122,7 @@ def parse_regression_diffs(diff_file):
 
 def get_test_output(test_name, results_dir):
     """
-    Reads the actual output file for a test from the results directory.
+    results 디렉토리에서 특정 테스트의 실제 출력 파일(.out)을 읽습니다.
     """
     log_path = os.path.join(results_dir, f"{test_name}.out")
     if os.path.exists(log_path):
@@ -130,7 +135,7 @@ def get_test_output(test_name, results_dir):
 
 def parse_regression_out(file_path):
     """
-    Parses regression.out and returns a list of test case dictionaries.
+    regression.out 파일을 파싱하여 테스트 케이스 정보 목록을 반환합니다.
     """
     test_cases = []
     current_group = "Default Group"
@@ -168,8 +173,8 @@ def parse_regression_out(file_path):
 
 def get_out_file_steps(filepath):
     """
-    Parses a PostgreSQL .out file and returns a list of dictionaries,
-    each containing the SQL statement and its line range.
+    PostgreSQL .out 파일을 파싱하여 SQL 문장과 해당 라인 범위를 포함하는 
+    단계(step) 목록을 반환합니다.
     """
     if not os.path.exists(filepath):
         return []
@@ -212,7 +217,7 @@ def get_out_file_steps(filepath):
 
 def create_junit_xml(test_cases, diffs, results_dir, output_path, expected_dir, ora_expected_dir):
     """
-    Creates the JUnit XML file with embedded steps and results.
+    각 단계별 결과와 diff를 포함하는 JUnit XML 파일을 생성합니다.
     """
     testsuites = ET.Element('testsuites')
     testsuite = ET.SubElement(testsuites, 'testsuite', {
@@ -350,7 +355,7 @@ def create_junit_xml(test_cases, diffs, results_dir, output_path, expected_dir, 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python3 convert_to_junit.py <regression.out> [regression.diffs]")
+        print("사용법: python3 convert_to_junit.py <regression.out> [regression.diffs]")
         sys.exit(1)
     
     reg_out = sys.argv[1]
@@ -364,7 +369,10 @@ if __name__ == "__main__":
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = f"pg_test_result_make_check_{timestamp}.xml"
     
+    # 데이터 파싱
     results = parse_regression_out(reg_out)
     diff_map = parse_regression_diffs(reg_diffs)
+    
+    # JUnit XML 생성
     create_junit_xml(results, diff_map, results_dir, output_file, expected_dir, ora_expected_dir)
-    print(f"Successfully converted results to {output_file}")
+    print(f"결과가 성공적으로 변환되었습니다: {output_file}")
