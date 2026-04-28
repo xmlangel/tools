@@ -1,0 +1,4 @@
+google-auth==2.49.2
+google-api-python-client==2.194.0
+python-dotenv==1.2.1
+requests==2.32.5
